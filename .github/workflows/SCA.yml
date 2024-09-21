@@ -24,6 +24,8 @@ jobs:
       # only required for workflows in private repositories
       actions: read
       contents: read
+      pages: write
+      id-token: write
 
     # Specifies the type of runner that the job will run on.
     runs-on: self-hosted
@@ -40,8 +42,8 @@ jobs:
       run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -S . -B build
 
     # Builds your CMake project. (This step is optional, as it is not required for code analysis).
-    - name: Build project (optional)
-      run: cmake --build build
+    #- name: Build project (optional)
+    #  run: cmake --build build
 
     # Runs code analysis with C/C++test.
     - name: Run C/C++test
