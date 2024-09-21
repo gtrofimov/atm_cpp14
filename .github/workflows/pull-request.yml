@@ -5,8 +5,8 @@ on:
     branches: [ master, main ]
 
 env:
-  LINE_COV_GATE: 26
-  MCDC_COV_GATE: 32
+  LINE_COV_GATE: 29
+  MCDC_COV_GATE: 35
 
 permissions:
   contents: read
