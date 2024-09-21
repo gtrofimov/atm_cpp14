@@ -68,7 +68,6 @@ TEST(Account, debitSimple) {
 }
 
 //should fail quality gate
-/* 
  TEST(Account, getBalanceInitBad) {
   ::testing::Test::RecordProperty("req", "ATM_test-520");
   ::testing::Test::RecordProperty("filename", __FILE__);
@@ -76,4 +75,3 @@ TEST(Account, debitSimple) {
   Account acct(initial);
   ASSERT_EQ(acct.getBalance(), initial - 1.0);
  }
-*/
