@@ -6,3 +6,8 @@ ATM_Cpp14_lib.a
 .build/
 .coverage
 .vscode
+.cpptest
+*.html
+*.png
+*.jpeg
+report.xml
