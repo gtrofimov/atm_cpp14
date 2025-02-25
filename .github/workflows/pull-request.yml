@@ -45,7 +45,7 @@ jobs:
         scontrol.git.exec=git
         logging.verbose=true
         dtp.additional.settings=report.coverage.images\=all;cpptest_ut
-        report.dtp.publish=false" >> cpptestcli.properties
+        report.dtp.publish=${{vars.DTP_PUBLISH}}" >> cpptestcli.properties
 
     - name: Configure CMake
       shell: bash
