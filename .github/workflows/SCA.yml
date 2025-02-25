@@ -51,7 +51,6 @@ jobs:
         dtp.user=${{vars.LSS_USER}}
         dtp.password=${{secrets.LSS_PASS}}
         dtp.project=ATM
-        build.id=${{env.build_id}}
         scope.scontrol=true
         report.suppressed_msgs=true
         scontrol.rep1.type=git
@@ -59,7 +58,7 @@ jobs:
         scontrol.git.exec=git
         logging.verbose=true
         dtp.additional.settings=report.coverage.images\=all;cpptest_ut
-        report.dtp.publish=${{vars.DTP_PUBLISH}}" >> cpptestcli.properties
+        report.dtp.publish=false" >> cpptestcli.properties
 
     # Configures your CMake project. Be sure the compile_commands.json file is created.
     - name: Configure project
