@@ -50,7 +50,7 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}
-      run: cmake -DCPPTEST_COVERAGE=ON -DCPPTEST_HOME=$CPPTEST_CT -S . -B .build
+      run: cmake -DCPPTEST_HOME=/home/gtrofimov/cpptest/ct/2024.2.0/cpptest-ct -DCPPTEST_COVERAGE=ON -S . -B .build
 
     - name: Build 
       working-directory: ${{github.workspace}}
