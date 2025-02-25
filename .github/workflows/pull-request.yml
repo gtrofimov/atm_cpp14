@@ -21,6 +21,32 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    # Set up properties file
+    - name: set up properties file
+      run: |
+        echo  -e "\n~~~\nSetting up and creating cpptestcli.properties file.\n"
+        echo $"
+        parasoft.eula.accepted=true
+        cpptest.license.network.edition=server_compliance_edition
+        license.network.enabled=true
+        license.network.auth.enabled=true
+        license.network.password=${{secrets.LSS_PASS}}
+        license.network.url=${{secrets.LSS_URL}}
+        license.network.user=${{vars.LSS_USER}}
+        dtp.url=${{secrets.DTP_URL}}
+        dtp.user=${{vars.LSS_USER}}
+        dtp.password=${{secrets.LSS_PASS}}
+        dtp.project=ATM
+        build.id=${{env.build_id}}
+        scope.scontrol=true
+        report.suppressed_msgs=true
+        scontrol.rep1.type=git
+        scontrol.rep1.git.url=https://github.com/${{github.repository}}
+        scontrol.git.exec=git
+        logging.verbose=true
+        dtp.additional.settings=report.coverage.images\=all;cpptest_ut
+        report.dtp.publish=false" >> cpptestcli.properties
+         
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}
