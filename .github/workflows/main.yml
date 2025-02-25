@@ -56,7 +56,7 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}
-      run: cmake -DCPPTEST_COVERAGE=ON -S . -B build
+      run: cmake -DCPPTEST_COVERAGE=ON _DCPPTEST_HOME=$CPPTEST_CT -S . -B build
 
     - name: Build 
       working-directory: ${{github.workspace}}
