@@ -53,7 +53,7 @@ jobs:
         dtp.project=ATM
         scope.scontrol=true
         scope.scontrol.files.filter.mode=branch
-        scope.scontrol.ref.branch=main
+        scope.scontrol.ref.branch=origin/main
         console.verbosity.level=high
         report.suppressed_msgs=true
         scontrol.rep1.type=git
