@@ -52,6 +52,8 @@ jobs:
         dtp.password=${{secrets.LSS_PASS}}
         dtp.project=ATM
         scope.scontrol=true
+        scope.scontrol.files.filter.mode=branch
+        scope.scontrol.ref.branch=main
         report.suppressed_msgs=true
         scontrol.rep1.type=git
         scontrol.rep1.git.url=https://github.com/${{github.repository}}
