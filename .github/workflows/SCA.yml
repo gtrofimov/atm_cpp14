@@ -54,6 +54,7 @@ jobs:
         scope.scontrol=true
         scope.scontrol.files.filter.mode=branch
         scope.scontrol.ref.branch=main
+        console.verbosity.level=high
         report.suppressed_msgs=true
         scontrol.rep1.type=git
         scontrol.rep1.git.url=https://github.com/${{github.repository}}
