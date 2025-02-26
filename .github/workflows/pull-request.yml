@@ -49,7 +49,7 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}
-      run: cmake -DCPPTEST_HOME=/home/gtrofimov/cpptest/ct/2024.2.0/cpptest-ct -DCPPTEST_COVERAGE=ON -S . -B .build
+      run: cmake -DCPPTEST_HOME=$CPPTEST_CT -DCPPTEST_COVERAGE=ON -S . -B .build
 
     - name: Build 
       working-directory: ${{github.workspace}}
@@ -58,7 +58,7 @@ jobs:
       run: cmake --build .build
 
     - name: Run Tests
-      working-directory: ${{github.workspace}}/build
+      working-directory: ${{github.workspace}}/.build
       shell: bash
       run: |
         rm -rf /cpptest-coverage/ATM_Cpp14_lib/ATM_Cpp14_lib.clog 
