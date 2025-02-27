@@ -3,14 +3,12 @@
 
 #include <string>
 
-/*
 TEST(Account, getBalanceDefault) {
   ::testing::Test::RecordProperty("req", "ATM_test-520");
  ::testing::Test::RecordProperty("cpptest_filename", __FILE__);
   Account acct;
   ASSERT_EQ(acct.getBalance(), 0.0);
 }
-*/
 
 TEST(Account, getBalanceInit) {
   ::testing::Test::RecordProperty("req", "ATM_test-520");
