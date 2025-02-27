@@ -57,7 +57,6 @@ jobs:
       shell: bash
       # Execute the build.  You can specify a specific target with "--target <NAME>"
       run: cmake --build build
-      run: cmake --build build
 
     - name: Run Tests
       working-directory: ${{github.workspace}}/build
@@ -69,7 +68,6 @@ jobs:
       continue-on-error: true
 
     - name: Generate Reports
-      working-directory: ${{github.workspace}}/build
       working-directory: ${{github.workspace}}/build
       shell: bash
       run: make cpptestcov-compute cpptestcov-suppress cpptestcov-report 
