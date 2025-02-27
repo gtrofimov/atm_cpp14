@@ -65,3 +65,8 @@ void ATM::withdraw(double amount)
     myDisplay->showBalance(bal);
 }
 
+// Dummy function to demonstrate adding new methods
+void ATM::exampleFunction()
+{
+    myDisplay->showInfoToUser("This is a dummy function");
+}
