@@ -43,7 +43,7 @@ jobs:
         dtp.url=${{secrets.DTP_URL}}
         dtp.user=${{vars.LSS_USER}}
         dtp.password=${{secrets.LSS_PASS}}
-        dtp.project=ATM
+        dtp.project=${{env.DTP_PROJECT}}
         build.id=${{env.build_id}}
         scope.scontrol=true
         report.suppressed_msgs=true
