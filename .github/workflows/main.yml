@@ -7,7 +7,7 @@ on:
 env:
   LINE_COV_GATE: 0
   MCDC_COV_GATE: 0
-  DTP_PROJECT: ATM_testing
+  DTP_PROJECT: ATM
 
 permissions:
   contents: read
