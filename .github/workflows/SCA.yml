@@ -4,8 +4,8 @@ name: C/C++test SA - push and pull
 
 on:
   # Triggers the workflow on push or pull request events but only for the master (main) branch.
-  push:
-    branches: [ feature_branch*]
+  # push:
+    # branches: [ feature_branch*]
   pull_request:
     branches: [ main ]
 
@@ -52,6 +52,8 @@ jobs:
         dtp.password=${{secrets.LSS_PASS}}
         dtp.project=ATM
         scope.scontrol=true
+        scope.scontrol.files.filter.mode=branch
+        scope.scontrol.ref.branch=origin/main
         report.suppressed_msgs=true
         scontrol.rep1.type=git
         scontrol.rep1.git.url=https://github.com/${{github.repository}}

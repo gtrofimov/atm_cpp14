@@ -8,3 +8,6 @@ ATM_Cpp14_lib.a
 .vscode
 *.properties
 **/*.properties
+.cpptest
+reports
+Debug
