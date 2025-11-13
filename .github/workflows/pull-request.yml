@@ -62,7 +62,7 @@ jobs:
       working-directory: ${{github.workspace}}/build
       shell: bash
       run: |
-        rm -rf /cpptest-coverage/ATM_Cpp14_lib/ATM_Cpp14_lib.clog 
+        rm -rf cpptest-coverage/ATM_Cpp14_lib/ATM_Cpp14_lib.clog 
         rm -rf gtest_results.xml
         ./atm_gtest --gtest_output=xml:atm_gtest_results.xml
       continue-on-error: true
