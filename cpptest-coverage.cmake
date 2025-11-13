@@ -24,7 +24,7 @@ function (cpptest_enable_coverage)
   endif()
 
   # Configure C/C++test compiler identifier
-  set(CPPTEST_COMPILER_ID "gcc_11-64")
+  set(CPPTEST_COMPILER_ID "gcc_13-64")
   # Configure coverage type(s) for instrumentation engine - see 'cpptestcc -help' for details
   set(CPPTEST_COVERAGE_TYPE_INSTRUMENTATION -line-coverage -statement-coverage -block-coverage -decision-coverage -simple-condition-coverage -mcdc-coverage -function-coverage -call-coverage)
   # Configure coverage type(s) for reporting engine - see 'cpptestcov -help' for details
