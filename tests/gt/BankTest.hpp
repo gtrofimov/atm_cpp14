@@ -4,7 +4,7 @@
 
 
 TEST(Bank, addAccount) {
-  ::testing::Test::RecordProperty("req", "ATM_test-521");
+  ::testing::Test::RecordProperty("req", "AGT-7");
   ::testing::Test::RecordProperty("cpptest_filename", __FILE__);
   Bank theBank;
   Account * acct = theBank.addAccount();
@@ -12,7 +12,7 @@ TEST(Bank, addAccount) {
 }
 
 TEST(Bank, addAccountMultiple) {
-  ::testing::Test::RecordProperty("req", "ATM_test-521");
+  ::testing::Test::RecordProperty("req", "AGT-7");
   ::testing::Test::RecordProperty("cpptest_filename", __FILE__);
   int count = 10;
   Bank theBank;
