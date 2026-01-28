@@ -10,3 +10,4 @@ ATM_Cpp14_lib.a
 **/*.properties
 reports
 Debug
+.cpptest

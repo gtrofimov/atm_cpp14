@@ -1,0 +1,23 @@
+# Define suppressions to prevent reporting of selected rule violations
+# detected by Parasoft static analysis.
+# Note: One suppression entry can affect more than one violation.
+#
+# Example:
+#
+# suppression-begin
+# file: file.ext               (required)
+# line: 12                     (optional)
+# rule-id: BD-PB-VOVR          (optional)
+# message: Avoid unused values (optional)
+# reason: Approved             (optional)
+# author: devel                (optional)
+# date: 2020-09-21             (optional)
+# suppression-end
+
+suppression-begin
+file: ATM.cxx
+rule-id: MISRACPP2023-8_2_7-c
+message: Do not cast pointer type 'Account *' to integral type 'bool'
+reason: per code review, wont fix
+author: gtrofimov
+suppression-end
