@@ -3,14 +3,13 @@
 
 #include "Bank.hxx"
 
-#include <cstdint>
 #include <string>
 
-class BaseDisplay; // parasoft-suppress MISRACPP2023-6_0_3-a "Project API types are intentionally in the global namespace."
-class Account; // parasoft-suppress MISRACPP2023-6_0_3-a "Project API types are intentionally in the global namespace."
+class BaseDisplay;
+class Account;
 
 // C++11 enum class
-enum class UserRequest : std::uint8_t { // parasoft-suppress MISRACPP2023-6_0_3-a "Project API types are intentionally in the global namespace."
+enum class UserRequest {
     REQUEST_INVALID = 0,
     REQUEST_BALANCE = 1,
     REQUEST_DEPOSIT,
@@ -18,15 +17,14 @@ enum class UserRequest : std::uint8_t { // parasoft-suppress MISRACPP2023-6_0_3-
     REQUEST_TRANSACTIONS,
 };
 
-class ATM // parasoft-suppress MISRACPP2023-6_0_3-a "Project API types are intentionally in the global namespace."
+class ATM
 {
     public:
 
 
         ATM(Bank* bank, BaseDisplay* display);
-        void viewAccount(std::int32_t accountNumber, std::string password);
+        void viewAccount(int accountNumber, std::string password);
         void fillUserRequest(UserRequest request, double amount);
-        void exampleFunction();
 
     private:
 
