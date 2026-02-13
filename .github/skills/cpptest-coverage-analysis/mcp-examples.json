@@ -1,0 +1,204 @@
+{
+  "mcp_coverage_analysis_examples": [
+    {
+      "name": "Query Uncovered Lines",
+      "description": "Find all lines that are coverable but not covered in a source file",
+      "tool": "mcp_cpptest-ct_query_line_coverage",
+      "parameters": {
+        "source_file": "/home/gtrofimov/parasoft/git/atm_cpp14/src/ATM.cxx",
+        "query_type": "notcovered",
+        "coverage_data_dir": "/home/gtrofimov/parasoft/git/atm_cpp14/.coverage"
+      },
+      "use_case": "Identify which lines in ATM.cxx need test coverage"
+    },
+    {
+      "name": "Query Covered Lines",
+      "description": "Find all lines that have been executed by tests",
+      "tool": "mcp_cpptest-ct_query_line_coverage",
+      "parameters": {
+        "source_file": "/home/gtrofimov/parasoft/git/atm_cpp14/src/Bank.cxx",
+        "query_type": "covered",
+        "coverage_data_dir": "/home/gtrofimov/parasoft/git/atm_cpp14/.coverage"
+      },
+      "use_case": "Verify that Bank component is fully tested"
+    },
+    {
+      "name": "Query All Coverable Lines",
+      "description": "Find all executable lines (coverable) in a file",
+      "tool": "mcp_cpptest-ct_query_line_coverage",
+      "parameters": {
+        "source_file": "/home/gtrofimov/parasoft/git/atm_cpp14/src/Account.cxx",
+        "query_type": "coverable",
+        "coverage_data_dir": "/home/gtrofimov/parasoft/git/atm_cpp14/.coverage"
+      },
+      "use_case": "Understand total scope of lines that need testing"
+    },
+    {
+      "name": "Query Suppressed Lines",
+      "description": "Find lines where coverage is intentionally suppressed",
+      "tool": "mcp_cpptest-ct_query_line_coverage",
+      "parameters": {
+        "source_file": "/home/gtrofimov/parasoft/git/atm_cpp14/src/BaseDisplay.cxx",
+        "query_type": "suppressed",
+        "coverage_data_dir": "/home/gtrofimov/parasoft/git/atm_cpp14/.coverage"
+      },
+      "use_case": "Review suppressions and their justifications"
+    },
+    {
+      "name": "Search MCDC Documentation",
+      "description": "Find documentation on improving MCDC (Modified Condition/Decision Coverage)",
+      "tool": "mcp_cpptest-ct_search_documentation",
+      "parameters": {
+        "user_query": "modified condition decision coverage MCDC best practices"
+      },
+      "use_case": "Learn how to achieve higher MCDC coverage"
+    },
+    {
+      "name": "Search Branch Coverage Documentation",
+      "description": "Find documentation on branch coverage strategies",
+      "tool": "mcp_cpptest-ct_search_documentation",
+      "parameters": {
+        "user_query": "improve branch coverage decision coverage testing"
+      },
+      "use_case": "Understand branch coverage and how to write tests for all paths"
+    },
+    {
+      "name": "Learn Coverage Suppression",
+      "description": "Understand how to suppress coverage for specific code",
+      "tool": "mcp_cpptest-ct_how_to_suppress_coverage",
+      "parameters": {},
+      "use_case": "Know when and how to suppress coverage for deprecated/legacy code"
+    },
+    {
+      "name": "Coverage Gap Analysis Workflow",
+      "description": "Complete workflow to identify and plan for coverage gaps",
+      "steps": [
+        {
+          "step": 1,
+          "description": "Query all uncovered lines in each source file",
+          "tool": "mcp_cpptest-ct_query_line_coverage",
+          "for_each_file": [
+            "/home/gtrofimov/parasoft/git/atm_cpp14/src/Account.cxx",
+            "/home/gtrofimov/parasoft/git/atm_cpp14/src/ATM.cxx",
+            "/home/gtrofimov/parasoft/git/atm_cpp14/src/Bank.cxx",
+            "/home/gtrofimov/parasoft/git/atm_cpp14/src/BaseDisplay.cxx"
+          ],
+          "parameters": {
+            "query_type": "notcovered"
+          }
+        },
+        {
+          "step": 2,
+          "description": "Calculate coverage percentage per file",
+          "calculation": "(covered_lines / coverable_lines) * 100"
+        },
+        {
+          "step": 3,
+          "description": "Prioritize files with lowest coverage",
+          "priority_order": [
+            "ATM.cxx (0% coverage - CRITICAL)",
+            "BaseDisplay.cxx (6% coverage - HIGH)",
+            "Account.cxx (38% coverage - MEDIUM)"
+          ]
+        },
+        {
+          "step": 4,
+          "description": "For top priority files, identify untested functions",
+          "method": "Query notcovered lines and match to function signatures"
+        },
+        {
+          "step": 5,
+          "description": "Write targeted test cases for uncovered functions",
+          "method": "Create test cases that exercise each uncovered function with various inputs"
+        }
+      ]
+    }
+  ],
+  "copilot_prompts_with_mcp": [
+    {
+      "prompt": "Find all untested lines in Account.cxx using MCP coverage tools",
+      "expected_tools": ["mcp_cpptest-ct_query_line_coverage"],
+      "expected_output": "List of line numbers in Account.cxx that are not covered"
+    },
+    {
+      "prompt": "What functions in ATM.cxx are not covered by tests? Use MCP.",
+      "expected_tools": ["mcp_cpptest-ct_query_line_coverage"],
+      "expected_output": "Analysis of uncovered functions in ATM.cxx"
+    },
+    {
+      "prompt": "Show me how to improve MCDC coverage using MCP documentation search",
+      "expected_tools": ["mcp_cpptest-ct_search_documentation"],
+      "expected_output": "Documentation and best practices for MCDC coverage"
+    },
+    {
+      "prompt": "Plan a testing strategy to reach 80% coverage. Analyze current gaps with MCP.",
+      "expected_tools": [
+        "mcp_cpptest-ct_query_line_coverage",
+        "mcp_cpptest-ct_search_documentation"
+      ],
+      "expected_output": "Gap analysis and test plan"
+    },
+    {
+      "prompt": "Which lines in Bank.cxx are covered and which are not? Show using MCP.",
+      "expected_tools": [
+        "mcp_cpptest-ct_query_line_coverage (with query_type: covered)",
+        "mcp_cpptest-ct_query_line_coverage (with query_type: notcovered)"
+      ],
+      "expected_output": "Comparison of covered vs uncovered lines"
+    },
+    {
+      "prompt": "Learn how to suppress coverage for this code and what's the best practice",
+      "expected_tools": ["mcp_cpptest-ct_how_to_suppress_coverage"],
+      "expected_output": "Coverage suppression guidance and best practices"
+    }
+  ],
+  "mcp_tools_reference": {
+    "mcp_cpptest-ct_query_line_coverage": {
+      "description": "Query line coverage information for specific source files",
+      "parameters": [
+        {
+          "name": "source_file",
+          "type": "string",
+          "required": true,
+          "description": "Absolute path to the source file"
+        },
+        {
+          "name": "query_type",
+          "type": "enum",
+          "required": true,
+          "values": [
+            "coverable - All executable lines",
+            "covered - Lines executed by tests",
+            "notcovered - Lines not executed",
+            "suppressed - Coverage-suppressed lines"
+          ],
+          "description": "Type of coverage query"
+        },
+        {
+          "name": "coverage_data_dir",
+          "type": "string",
+          "required": true,
+          "description": "Directory containing .cov files"
+        }
+      ],
+      "returns": "List of line numbers matching the query type"
+    },
+    "mcp_cpptest-ct_search_documentation": {
+      "description": "Search C/C++test documentation for topics",
+      "parameters": [
+        {
+          "name": "user_query",
+          "type": "string",
+          "required": true,
+          "description": "Natural language search query about cpptest features"
+        }
+      ],
+      "returns": "Relevant documentation pages and content"
+    },
+    "mcp_cpptest-ct_how_to_suppress_coverage": {
+      "description": "Get instructions on suppressing coverage",
+      "parameters": [],
+      "returns": "Documentation on coverage suppression syntax and best practices"
+    }
+  }
+}
