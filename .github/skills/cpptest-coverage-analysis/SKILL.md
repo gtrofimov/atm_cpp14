@@ -18,6 +18,22 @@ Use this skill when you need to:
 - Identify gaps in test coverage for specific functions or files
 - Track coverage improvements over time
 
+## Quick Start (Phase 1 - Recommended)
+
+Use the automated helper for structured output:
+
+```bash
+./.github/skills/cpptest-coverage-analysis/run-coverage-phase1.sh /path/to/project
+```
+
+**Output includes:**
+- ✅ Structured JSON with coverage percentage
+- ✅ Execution ID for tracking
+- ✅ Paths to all generated reports
+- ✅ Audit trail with user and git branch
+
+This outputs Phase 1 metadata while running the full analysis. Perfect for CI/CD pipelines and automation.
+
 ## Prerequisites
 
 Before running coverage analysis:

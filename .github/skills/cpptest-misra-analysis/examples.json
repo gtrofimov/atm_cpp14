@@ -1,0 +1,101 @@
+{
+  "examples": [
+    {
+      "name": "Basic MISRA Analysis",
+      "description": "Run MISRA C++ 2023 analysis on a single file",
+      "command": "$CPPTEST_STD/cpptestcli -config 'builtin://MISRA C++ 2023' -compiler gcc_13-64 -- gcc -Iinclude src/Account.cxx -report reports/misra_analysis"
+    },
+    {
+      "name": "Multi-file Analysis",
+      "description": "Analyze multiple source files together",
+      "command": "$CPPTEST_STD/cpptestcli -config 'builtin://MISRA C++ 2023' -compiler gcc_13-64 -- gcc -Iinclude src/Account.cxx src/ATM.cxx src/Bank.cxx src/BaseDisplay.cxx -report reports/misra_analysis"
+    },
+    {
+      "name": "With Multiple Include Paths",
+      "description": "Include multiple header directories",
+      "command": "$CPPTEST_STD/cpptestcli -config 'builtin://MISRA C++ 2023' -compiler gcc_13-64 -- gcc -Iinclude -Iinclude/subsystem -Ithird_party/boost src/*.cxx -report reports/misra_analysis"
+    },
+    {
+      "name": "Using Build Trace",
+      "description": "Capture analysis from build command",
+      "command": "$CPPTEST_STD/cpptestcli -config 'builtin://MISRA C++ 2023' -compiler gcc_13-64 -trace 'make clean all' -report reports/misra_analysis"
+    },
+    {
+      "name": "Clang Compiler",
+      "description": "Run analysis with Clang compiler",
+      "command": "$CPPTEST_STD/cpptestcli -config 'builtin://MISRA C++ 2023' -compiler clang_17_0-x86_64 -- clang++ -std=c++14 -Iinclude src/*.cxx -report reports/misra_analysis"
+    },
+    {
+      "name": "Auto-detect Compiler",
+      "description": "Automatically detect compiler configuration",
+      "command": "$CPPTEST_STD/cpptestcli -detect-compiler gcc"
+    },
+    {
+      "name": "List Available Compilers",
+      "description": "Show all supported compiler configurations",
+      "command": "$CPPTEST_STD/cpptestcli -list-compilers | grep -i gcc"
+    },
+    {
+      "name": "Verify MISRA Configs",
+      "description": "List all available MISRA configurations",
+      "command": "$CPPTEST_STD/cpptestcli -list-configs | grep MISRA"
+    },
+    {
+      "name": "Helper Script with Defaults",
+      "description": "Run analysis using the helper script",
+      "command": "./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh"
+    },
+    {
+      "name": "Helper Script with Custom Config",
+      "description": "Run analysis script with environment variables",
+      "command": "COMPILER=gcc_13-64 INCLUDE_DIRS='include' SOURCE_FILES='src/Account.cxx src/Bank.cxx' ./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh"
+    }
+  ],
+  "common_violations": [
+    {
+      "rule": "MISRACPP2023-6_9_2-a",
+      "violation": "Do not use the 'int' standard integer type",
+      "fix": "Use sized types like int32_t, uint16_t, etc. from <cstdint>"
+    },
+    {
+      "rule": "MISRACPP2023-15_0_2-a",
+      "violation": "User-declared 'move constructor' should have a 'noexcept' specifier",
+      "fix": "Add 'noexcept' to move constructor: Account(Account&&) noexcept = default;"
+    },
+    {
+      "rule": "MISRACPP2023-21_6_2-a",
+      "violation": "'new' operator should not be used",
+      "fix": "Use smart pointers: std::unique_ptr or std::make_unique"
+    },
+    {
+      "rule": "MISRACPP2023-8_2_2-b",
+      "violation": "Do not use a C-style cast",
+      "fix": "Use static_cast<>, reinterpret_cast<>, or dynamic_cast<>"
+    },
+    {
+      "rule": "MISRACPP2023-7_11_1-a",
+      "violation": "Prefer 'nullptr' to '0' as the null pointer value",
+      "fix": "Replace NULL and 0 with nullptr"
+    },
+    {
+      "rule": "MISRACPP2023-8_2_7-c",
+      "violation": "Do not cast pointer type to integral type 'bool'",
+      "fix": "Use bool operator or explicit null check: if (ptr != nullptr)"
+    },
+    {
+      "rule": "MISRACPP2023-6_0_3-a",
+      "violation": "Do not use the 'using' directive in the global namespace",
+      "fix": "Use explicit qualification or using declaration instead of using namespace"
+    },
+    {
+      "rule": "MISRACPP2023-9_4_2-a",
+      "violation": "There is no 'default' label in a switch statement",
+      "fix": "Add default case to all switch statements"
+    }
+  ],
+  "report_locations": {
+    "html": "reports/report.html",
+    "xml": "reports/report.xml",
+    "log": "misra_analysis.log"
+  }
+}

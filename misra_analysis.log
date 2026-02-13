@@ -1,0 +1,176 @@
+Parasoft C/C++test Standard 2025.2.0 (10.7.3.20251120B5330) -- Copyright (C) 2025 Parasoft Corporation
+
+Loading preferences...
+Checking license...
+License: Machine id LINUX2-55003c05 (Default)
+Checking compiler configuration...
+Sending usage data is disabled, use usage.reporting.enabled to enable
+Checking test configuration...
+Updating rules...
+Computing input scope...
+Collecting build data from [gcc, -Iinclude, src/Account.cxx, src/ATM.cxx, src/Bank.cxx, src/BaseDisplay.cxx, -report, reports/misra_cpp_2023]...
+Running analysis...
+Reporting Scope Analyzer results...
+Starting C/C++ Code Analysis (MISRA C++ 2023)...
+Checking BaseDisplay.cxx...
+Checking ATM.cxx...
+Checking Bank.cxx...
+Checking Account.cxx...
+Code Analysis (MISRA C++ 2023) done - files checked: 4
+Reporting Parasoft C/C++ Code Analyzer results...
+Starting C/C++ Static Analysis (MISRA C++ 2023)...
+Reporting Parasoft C/C++ Static Analyzer results...
+Reading static results for Account.cxx...
+Reading static results for ATM.cxx...
+Reading static results for Bank.cxx...
+Reading static results for BaseDisplay.cxx...
+
+MISRACPP2023-15_0_2-a: User-declared 'move constructor' should have a 'noexcept' specifier
+/home/gtrofimov/parasoft/git/atm_cpp14/src/Account.cxx: 8
+
+MISRACPP2023-18_4_1-a: Move constructor of class 'Account' should specify 'noexcept'
+/home/gtrofimov/parasoft/git/atm_cpp14/src/Account.cxx: 8
+
+MISRACPP2023-0_1_2-a: Unused function's 'emplace_back' return value
+/home/gtrofimov/parasoft/git/atm_cpp14/src/Account.cxx: 20
+
+MISRACPP2023-0_1_2-a: Unused function's 'emplace_back' return value
+/home/gtrofimov/parasoft/git/atm_cpp14/src/Account.cxx: 22
+
+MISRACPP2023-0_1_2-a: Unused function's 'emplace_back' return value
+/home/gtrofimov/parasoft/git/atm_cpp14/src/Account.cxx: 28
+
+MISRACPP2023-0_1_2-a: Unused function's 'emplace_back' return value
+/home/gtrofimov/parasoft/git/atm_cpp14/src/Account.cxx: 37
+
+MISRACPP2023-0_1_2-a: Unused function's 'for_each' return value
+/home/gtrofimov/parasoft/git/atm_cpp14/src/Account.cxx: 58
+
+MISRACPP2023-6_9_2-a: Do not use the 'int' standard integer type
+/home/gtrofimov/parasoft/git/atm_cpp14/src/Account.cxx: 42
+
+MISRACPP2023-6_9_2-a: Do not use the 'int' standard integer type
+/home/gtrofimov/parasoft/git/atm_cpp14/src/Account.cxx: 44
+
+MISRACPP2023-8_2_7-c: Do not cast pointer type 'Account *' to integral type 'bool'
+/home/gtrofimov/parasoft/git/atm_cpp14/src/ATM.cxx: 15
+
+MISRACPP2023-8_2_8-b: Do not cast pointer type 'Account *' to integral type 'bool'
+/home/gtrofimov/parasoft/git/atm_cpp14/src/ATM.cxx: 15
+
+MISRACPP2023-8_2_7-c: Do not cast pointer type 'Account *' to integral type 'bool'
+/home/gtrofimov/parasoft/git/atm_cpp14/src/ATM.cxx: 23
+
+MISRACPP2023-8_2_8-b: Do not cast pointer type 'Account *' to integral type 'bool'
+/home/gtrofimov/parasoft/git/atm_cpp14/src/ATM.cxx: 23
+
+MISRACPP2023-8_18_2-a: Assignment operator '=' is used in improper context
+/home/gtrofimov/parasoft/git/atm_cpp14/src/ATM.cxx: 15
+
+MISRACPP2023-9_4_2-b: The 'case' branch in a switch should be unconditionally terminated
+/home/gtrofimov/parasoft/git/atm_cpp14/src/ATM.cxx: 32
+
+MISRACPP2023-9_3_1-b: An 'if' statement should be followed by a block
+/home/gtrofimov/parasoft/git/atm_cpp14/src/ATM.cxx: 23
+
+MISRACPP2023-6_0_3-a: Do not use the 'using' directive in the global namespace
+/home/gtrofimov/parasoft/git/atm_cpp14/src/ATM.cxx: 5
+
+MISRACPP2023-9_4_2-a: There is no 'default' label in a switch statement
+/home/gtrofimov/parasoft/git/atm_cpp14/src/ATM.cxx: 24
+
+MISRACPP2023-6_9_2-a: Do not use the 'int' standard integer type
+/home/gtrofimov/parasoft/git/atm_cpp14/src/ATM.cxx: 13
+
+MISRACPP2023-7_0_5-a: Integral promotion or the usual arithmetic conversions shall not change the type signedness of an operand from 'int' to 'unsigned long'
+/home/gtrofimov/parasoft/git/atm_cpp14/src/Bank.cxx: 18
+
+MISRACPP2023-7_0_6-a: Do not pass an argument of type 'int' to a function parameter of type 'size_type'
+/home/gtrofimov/parasoft/git/atm_cpp14/src/Bank.cxx: 20
+
+MISRACPP2023-7_11_1-a: Prefer 'nullptr' to '0' as the null pointer value
+/home/gtrofimov/parasoft/git/atm_cpp14/src/Bank.cxx: 25
+
+MISRACPP2023-8_2_2-b: Do not use a C-style cast to the 'Account *' type
+/home/gtrofimov/parasoft/git/atm_cpp14/src/Bank.cxx: 20
+
+MISRACPP2023-21_6_2-a: 'new' operator should not be used
+/home/gtrofimov/parasoft/git/atm_cpp14/src/Bank.cxx: 36
+
+MISRACPP2023-21_6_1-a: 'new' operator should not be used
+/home/gtrofimov/parasoft/git/atm_cpp14/src/Bank.cxx: 36
+
+MISRACPP2023-15_0_1-b: Do not define the '~Bank' destructor with an empty body
+/home/gtrofimov/parasoft/git/atm_cpp14/src/Bank.cxx: 9
+
+MISRACPP2023-5_7_2-a: Section of code should not be 'commented out'
+/home/gtrofimov/parasoft/git/atm_cpp14/src/Bank.cxx: 28
+
+MISRACPP2023-6_9_2-a: Do not use the 'int' standard integer type
+/home/gtrofimov/parasoft/git/atm_cpp14/src/Bank.cxx: 15
+
+MISRACPP2023-7_11_1-b: Do not use the 'NULL' identifier
+/home/gtrofimov/parasoft/git/atm_cpp14/src/Bank.cxx: 25
+
+MISRACPP2023-8_2_7-c: Do not cast pointer type 'const char *' to integral type 'bool'
+/home/gtrofimov/parasoft/git/atm_cpp14/src/BaseDisplay.cxx: 9
+
+MISRACPP2023-8_2_8-b: Do not cast pointer type 'const char *' to integral type 'bool'
+/home/gtrofimov/parasoft/git/atm_cpp14/src/BaseDisplay.cxx: 9
+
+MISRACPP2023-0_2_2-b: The 'msg' parameter is never used in the 'logError' virtual function
+/home/gtrofimov/parasoft/git/atm_cpp14/src/BaseDisplay.cxx: 21
+
+MISRACPP2023-6_0_3-a: Do not use the 'using' declaration in the global namespace
+/home/gtrofimov/parasoft/git/atm_cpp14/src/BaseDisplay.cxx: 5
+
+MISRACPP2023-9_4_2-a: There is no 'default' label in a switch statement
+/home/gtrofimov/parasoft/git/atm_cpp14/src/BaseDisplay.cxx: 25
+
+Starting C/C++ Flow Analysis (MISRA C++ 2023)...
+Parasoft C/C++ Flow Analyzer 10.7.3.20251014B6172
+Building analysis data for Account.cxx...
+Building analysis data for Bank.cxx...
+Building analysis data for ATM.cxx...
+Building analysis data for BaseDisplay.cxx...
+Graph scanning: Initializing control flow graphs prescan
+Graph scanning: Prescanning control flow graphs. Performed 0%
+Graph scanning: Prescanning control flow graphs. Performed 100%
+Graph scanning > Processing methods: Collecting exceptions info, phase 1: 100% 
+Graph scanning: Finalizing control flow graphs prescan
+Checking Flow Analysis rules...
+Checking Account.cxx
+Checking ATM.cxx
+Checking BaseDisplay.cxx
+Checking Bank.cxx
+Flow Analysis (MISRA C++ 2023) done
+Reporting Parasoft C/C++ Flow Analyzer results...
+
+MISRACPP2023-0_0_2-a: Condition "display.getType() == 0" always evaluates to false
+/home/gtrofimov/parasoft/git/atm_cpp14/src/Account.cxx: 46
+
+Starting C/C++ Global Static Analysis (MISRA C++ 2023)...
+Reading Global Static Analysis results for Account.cxx...
+Reading Global Static Analysis results for ATM.cxx...
+Reading Global Static Analysis results for Bank.cxx...
+Reading Global Static Analysis results for BaseDisplay.cxx...
+Checking rule GLOBAL-ONEEXTERNDEF...
+Checking rule GLOBAL-COMPATDECLS...
+Checking rule GLOBAL-ONEDEFTYPE...
+Checking rule GLOBAL-ONEDEFRULE...
+Checking rule GLOBAL-ONEDEFINLINE...
+Checking rule GLOBAL-PREDICATENOSE...
+Checking rule GLOBAL-EXCSPECDECL...
+Reporting Parasoft C/C++ Global Static Analyzer results...
+Generated XML report: /home/gtrofimov/parasoft/git/atm_cpp14/reports/report.xml
+Sending reports by mail is disabled, use report.mail.enabled setting to enable.
+Publishing reports to DTP is disabled, use report.dtp.publish setting to enable.
+Preparing report data...
+Generated HTML report: /home/gtrofimov/parasoft/git/atm_cpp14/reports/report.html
+
+Static analysis violations: 35
+Unit tests failures: 0
+Executed test cases: 0 
+Line Coverage: 0/0 lines
+
+Total violations: 35, Report generated: 02/13/26 11:20:05

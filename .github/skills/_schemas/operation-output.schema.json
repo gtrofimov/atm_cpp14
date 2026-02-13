@@ -1,0 +1,204 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Skill Operation Output Schema",
+  "description": "Standardized output format for all skill operations to ensure consistent hand-offs between skills and workflows",
+  "type": "object",
+  "required": ["status", "operation", "timestamp", "outputs"],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["success", "warning", "error"],
+      "description": "Operation result status"
+    },
+    "operation": {
+      "type": "string",
+      "description": "Name of operation performed (e.g., 'create-skill', 'run-tests')",
+      "examples": ["create-skill", "build-with-coverage", "generate-report"]
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when operation completed"
+    },
+    "duration_seconds": {
+      "type": "number",
+      "description": "Total execution time in seconds",
+      "minimum": 0
+    },
+    "inputs": {
+      "type": "object",
+      "description": "Input parameters that drove the operation",
+      "examples": [
+        {
+          "skill_name": "cpptest-coverage",
+          "description": "Analyze coverage",
+          "license": "MIT"
+        }
+      ]
+    },
+    "outputs": {
+      "type": "object",
+      "required": ["primary_artifact", "files_created"],
+      "properties": {
+        "primary_artifact": {
+          "type": "string",
+          "description": "Main deliverable (e.g., file path, report location)",
+          "examples": [".github/skills/test-skill", "build/coverage/report.html"]
+        },
+        "files_created": {
+          "type": "array",
+          "description": "All files created during operation",
+          "items": {"type": "string"},
+          "examples": [
+            [
+              ".github/skills/test-skill/SKILL.md",
+              ".github/skills/test-skill/scripts/run.sh"
+            ]
+          ]
+        },
+        "files_modified": {
+          "type": "array",
+          "description": "All files modified during operation",
+          "items": {"type": "string"}
+        },
+        "directories_created": {
+          "type": "array",
+          "description": "All directories created",
+          "items": {"type": "string"}
+        },
+        "summary": {
+          "type": "string",
+          "description": "Human-readable summary of outputs"
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "description": "Validation results and success criteria checks",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["passed", "failed", "partial"],
+          "description": "Validation status"
+        },
+        "checks": {
+          "type": "array",
+          "description": "List of validation checks performed",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "passed": {"type": "boolean"},
+              "message": {"type": "string"}
+            }
+          }
+        },
+        "success_criteria": {
+          "type": "array",
+          "description": "Criteria that were verified met",
+          "items": {
+            "type": "object",
+            "properties": {
+              "criterion": {"type": "string"},
+              "met": {"type": "boolean"},
+              "evidence": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+    "audit_trail": {
+      "type": "object",
+      "required": ["execution_id", "user", "git_branch"],
+      "description": "Audit information for compliance and rollback",
+      "properties": {
+        "execution_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for this execution"
+        },
+        "user": {
+          "type": "string",
+          "description": "User or system account that executed the operation"
+        },
+        "git_branch": {
+          "type": "string",
+          "description": "Git branch at time of execution"
+        },
+        "precondition_state": {
+          "type": "object",
+          "description": "System state before execution",
+          "properties": {
+            "git_commit": {"type": "string"},
+            "workspace_clean": {"type": "boolean"},
+            "files_involved": {
+              "type": "array",
+              "items": {"type": "string"}
+            }
+          }
+        },
+        "postcondition_state": {
+          "type": "object",
+          "description": "System state after execution",
+          "properties": {
+            "git_commit": {"type": "string"},
+            "files_affected": {"type": "integer"},
+            "changes_diff_url": {"type": "string"}
+          }
+        },
+        "rollback_info": {
+          "type": "object",
+          "description": "Information needed to rollback this execution",
+          "properties": {
+            "reversible": {"type": "boolean"},
+            "rollback_command": {"type": "string"},
+            "rollback_log_path": {"type": "string"}
+          }
+        }
+      }
+    },
+    "errors": {
+      "type": "array",
+      "description": "List of errors encountered (empty if successful)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "code": {"type": "string"},
+          "message": {"type": "string"},
+          "context": {"type": "string"},
+          "recoverable": {"type": "boolean"}
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "description": "Non-fatal warnings to user attention",
+      "items": {
+        "type": "object",
+        "properties": {
+          "code": {"type": "string"},
+          "message": {"type": "string"},
+          "recommendation": {"type": "string"}
+        }
+      }
+    },
+    "next_steps": {
+      "type": "array",
+      "description": "Recommended next actions",
+      "items": {"type": "string"},
+      "examples": [
+        [
+          "Edit .github/skills/test-skill/SKILL.md with your instructions",
+          "Test skill via: copilot ask 'Use the test-skill to...'",
+          "Commit to git when satisfied"
+        ]
+      ]
+    },
+    "related_skills": {
+      "type": "array",
+      "description": "Other skills that might be useful",
+      "items": {"type": "string"},
+      "examples": [["skill-composition", "audit-logging"]]
+    }
+  }
+}
