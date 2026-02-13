@@ -13,3 +13,5 @@ reports
 Debug
 .github/skills/**/misra_analysis*.log
 misra_*.log
+MCDC_*.md
+MCDC_*.txt
