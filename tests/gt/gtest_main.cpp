@@ -2,7 +2,6 @@
 #include "gtest/gtest.h"
 
 #include "AccountTest.hpp"
-#include "ATMTest.hpp"
 #include "BankTest.hpp"
 #include "BaseDisplayTest.hpp"
 

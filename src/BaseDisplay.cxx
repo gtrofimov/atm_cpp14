@@ -2,43 +2,42 @@
 #include "ATM.hxx"
 
 #include <iostream>
+using namespace std;
 
 void BaseDisplay::showInfoToUser(const char* message)
 {
-    if (message != nullptr)
+    if (message)
     {
-        std::cout << message ;
+        cout << message ;
     }
 }
 
 void BaseDisplay::showBalance(double balance)
 {
-    std::cout << " : " << balance << std::endl;
+    cout << " : " << balance << endl;
 }
 
 BaseDisplay::DisplayType BaseDisplay::getType() {return SECURE;}
-void BaseDisplay::logError(std::string msg) { (void)msg; };
+void BaseDisplay::logError(std::string msg) {};
 
 void BaseDisplay::showTransaction(UserRequest request, double amount)
 {
     switch (request) {
         case UserRequest::REQUEST_TRANSACTIONS:
-            std::cout << "REQUEST_TRANSACTIONS";
+            cout << "REQUEST_TRANSACTIONS";
             break;
         case UserRequest::REQUEST_BALANCE:
-            std::cout << "REQUEST_BALANCE";
+            cout << "REQUEST_BALANCE";
             break;
         case UserRequest::REQUEST_DEPOSIT:
-            std::cout << "REQUEST_DEPOSIT";
+            cout << "REQUEST_DEPOSIT";
             break;
         case UserRequest::REQUEST_INVALID:
-            std::cout << "REQUEST_INVALID";
+            cout << "REQUEST_INVALID";
             break;
         case UserRequest::REQUEST_WITHDRAW:
-            std::cout << "REQUEST_WITHDRAW";
-            break;
-        default:
+            cout << "REQUEST_WITHDRAW";
             break;
     }
-    std::cout << " : " << amount << std::endl;
+    cout << " : " << amount << endl;
 }
