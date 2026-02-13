@@ -15,6 +15,8 @@ REPORT_FILTER_REGEX="${REPORT_FILTER_REGEX:-/src/|/include/}"
 OUTPUT_JSON="${OUTPUT_JSON:-0}"
 JSON_OUTPUT_PATH="${JSON_OUTPUT_PATH:-$BUILD_DIR/coverage_summary.json}"
 JSON_OUTPUT_STDOUT="${JSON_OUTPUT_STDOUT:-0}"
+SUMMARY_DIR="${SUMMARY_DIR:-$PROJECT_ROOT/reports/summary}"
+SUMMARY_STDOUT="${SUMMARY_STDOUT:-1}"
 EXEC_ID="$(date +%s)-$$"
 STATUS="success"
 EXIT_CODE=0
@@ -26,14 +28,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo -e "${YELLOW}C/C++test Coverage Analysis${NC}"
-echo "================================"
-echo "Project: $PROJECT_ROOT"
-echo "CPPTEST_HOME: $CPPTEST_HOME"
-echo "CLEAN_COVERAGE: $CLEAN_COVERAGE"
-echo "AUTO_REBUILD_ON_MISMATCH: $AUTO_REBUILD_ON_MISMATCH"
-echo "WRITE_DELTA_SUMMARY: $WRITE_DELTA_SUMMARY"
-echo "REPORT_FILTER_PATHS: $REPORT_FILTER_PATHS"
-echo "OUTPUT_JSON: $OUTPUT_JSON"
+echo "Project: $PROJECT_ROOT | CPPTEST_HOME: $CPPTEST_HOME"
 echo ""
 
 clean_coverage_artifacts() {
@@ -69,46 +64,9 @@ generate_report() {
     make cpptestcov-report 2>&1 | tee coverage_report.txt
 }
 
-write_filtered_report() {
-    if [ "$REPORT_FILTER_PATHS" -eq 1 ] && [ -f "$BUILD_DIR/coverage_report.txt" ]; then
-        {
-            grep "^> TOTAL" "$BUILD_DIR/coverage_report.txt" || true
-            grep "^> " "$BUILD_DIR/coverage_report.txt" | grep -E "$REPORT_FILTER_REGEX" || true
-        } > "$BUILD_DIR/coverage_report.filtered.txt"
-    fi
-}
+# write_filtered_report inlined in step 4
 
-write_delta_summary() {
-    if [ "$WRITE_DELTA_SUMMARY" -ne 1 ] || [ ! -f "$BUILD_DIR/coverage_report.txt" ]; then
-        return
-    fi
-
-    local html_dir=""
-    if [ -f "$BUILD_DIR/report.html" ]; then
-        html_dir="$BUILD_DIR"
-    elif [ -f "$PROJECT_ROOT/reports/report.html" ]; then
-        html_dir="$PROJECT_ROOT/reports"
-    else
-        html_dir="$BUILD_DIR"
-    fi
-
-    local summary_path="$html_dir/coverage_delta_summary.txt"
-    awk -v filter="$REPORT_FILTER_PATHS" -v regex="$REPORT_FILTER_REGEX" '
-        $1 == ">" && $0 ~ /LC=/ {
-            file=$2
-            lc=""
-            mcdc=""
-            for (i=1;i<=NF;i++) {
-                if ($i ~ /^LC=/) lc=$i
-                if ($i ~ /^MCDC=/) mcdc=$i
-            }
-            if (lc == "") lc="LC=NA"
-            if (mcdc == "") mcdc="MCDC=NA"
-            if (filter == 1 && file !~ regex) next
-            printf "%s %s %s\n", file, lc, mcdc
-        }
-    ' "$BUILD_DIR/coverage_report.txt" > "$summary_path"
-}
+# write_delta_summary inlined in step 4
 
 write_json_summary() {
         if [ "$OUTPUT_JSON" -ne 1 ]; then
@@ -168,6 +126,8 @@ EOF
                 cat "$JSON_OUTPUT_PATH"
         fi
 }
+
+# write_markdown_summary inlined in step 4
 
 on_error() {
         EXIT_CODE=$?
@@ -262,5 +222,6 @@ else
 fi
 
 write_json_summary
+write_markdown_summary
 
 exit $EXIT_CODE

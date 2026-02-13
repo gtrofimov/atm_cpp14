@@ -20,213 +20,96 @@ Use this skill when you need to:
 
 ## Quick Start
 
-Run the coverage helper directly:
-
-```bash
-./.github/skills/cpptest-coverage-analysis/run-coverage.sh
-```
-
-To emit structured JSON metadata for automation/CI, enable `OUTPUT_JSON`:
-
-```bash
-OUTPUT_JSON=1 ./.github/skills/cpptest-coverage-analysis/run-coverage.sh
-```
+Run: `./.github/skills/cpptest-coverage-analysis/run-coverage.sh` or `OUTPUT_JSON=1` for JSON output.
 
 ## Prerequisites
 
-Before running coverage analysis:
-
-1. Ensure CPPTEST_HOME environment variable is set:
-   ```bash
-   export CPPTEST_HOME=/home/gtrofimov/parasoft/2025.2/ct/cpptest-ct
-   ```
-
-2. Verify a valid C/C++test license is available
-
-3. The project must be a CMake-based C++ project with GoogleTest integration
+- `CPPTEST_HOME` environment variable set to C/C++test installation
+- Valid C/C++test license
+- CMake-based C++ project with GoogleTest integration
 
 ## Step-by-step process
 
-### 1. Clean rebuild with coverage instrumentation
-
-Clean the previous build and reconfigure CMake with coverage enabled:
+### 1. Clean rebuild with coverage
 
 ```bash
 cd /home/gtrofimov/parasoft/git/atm_cpp14
-rm -rf build
-mkdir build
-cd build
-CPPTEST_HOME=/home/gtrofimov/parasoft/2025.2/ct/cpptest-ct cmake -DCPPTEST_COVERAGE=ON ..
-make clean all -j4
+rm -rf build && mkdir build && cd build
+cmake -DCPPTEST_COVERAGE=ON .. && make clean all -j4
 ```
-
-This will:
-- Configure CMake with coverage instrumentation enabled
-- Compile all source files with cpptestcc (C/C++test compiler wrapper)
-- Generate coverage map files in `cpptest-coverage/` directory
-- Instrument the test executable with coverage runtime
 
 ### 2. Run instrumented tests
 
-Execute the test binary to collect coverage data:
-
 ```bash
-cd /home/gtrofimov/parasoft/git/atm_cpp14/build
 ./atm_gtest
 ```
 
-This will:
-- Run all 13 unit tests
-- Generate `.clog` (coverage log) files
-- Generate `.cov` files in `.coverage/` directory with execution traces
-- Report test pass/fail status
-
 ### 3. Compute coverage metrics
 
-Process the raw coverage data into metrics:
-
 ```bash
-cd /home/gtrofimov/parasoft/git/atm_cpp14/build
 make cpptestcov-compute
 ```
 
-This step:
-- Reads coverage map files and logs
-- Computes coverage for multiple metrics (LC, SC, BC, DC, MCDC, FC, CC)
-- Creates coverage database indexed for fast queries
-- Generates `.cov` index files
-
-### 4. Generate coverage report
-
-Create a human-readable coverage report:
+### 4. Generate report
 
 ```bash
-cd /home/gtrofimov/parasoft/git/atm_cpp14/build
 make cpptestcov-report
 ```
 
-This will:
-- Generate console output with coverage metrics by file and function
-- Produce metrics/report XML files in the build directory
-- Create formatted coverage statistics
-
 ## Understanding Coverage Metrics
 
-The tool provides these coverage metrics:
-
-- **LC (Line Coverage)**: Percentage of executable lines executed
-- **SC (Statement Coverage)**: Percentage of statements executed
-- **BC (Branch Coverage)**: Percentage of branch directions taken
-- **DC (Decision Coverage)**: Percentage of boolean decisions evaluated
-- **SCC (Structured Code Coverage)**: Coverage of block and branching structures
-- **MCDC (Modified Condition/Decision Coverage)**: High-rigor coverage metric
-- **FC (Function Coverage)**: Percentage of functions executed
-- **CC (Call Coverage)**: Percentage of function calls made
+For detailed metric descriptions, see [Common Patterns: Coverage Metrics](../COMMON_PATTERNS.md#coverage-metrics-cctest-ct).
 
 ## Interpreting Results
 
-### File-level coverage
+Results show file-level and function-level coverage. Low coverage areas indicate untested code paths. See [Common Patterns: Coverage Metrics](../COMMON_PATTERNS.md#coverage-metrics-cctest-ct) for metric descriptions.
 
-The report shows coverage for each source file:
+## Coverage targets
 
-```
-> atm_cpp14/src/Bank.cxx           LC=100% 12/12  SC=100% 12/12  ...
-> atm_cpp14/src/Account.cxx        LC=38% 8/21    SC=38% 8/21    ...
-> atm_cpp14/src/ATM.cxx            LC=0% 0/22     SC=0% 0/25     ...
-```
-
-### Function-level coverage
-
-Coverage is broken down by function:
-
-```
-Bank::addAccount()                 LC=100% 4/4    SC=100% 4/4    FC=100% 1/1
-Account::deposit(double)           LC=100% 3/3    SC=100% 3/3    FC=100% 1/1
-ATM::exampleFunction()             LC=0% 0/1      SC=0% 0/1      FC=0% 0/1
-```
-
-### Coverage gaps
-
-Low coverage areas indicate:
-- Functions not exercised by tests
-- Decision branches not explored
-- Conditions not all combinations tested
-
-## Common coverage targets
-
-- **Good coverage**: 80%+ line coverage for core functionality
-- **Excellent coverage**: 90%+ line coverage + 80%+ MCDC coverage
-- **Critical components**: Should aim for 100% LC and FC
-- **Test code**: Not instrumented (filtered out automatically)
+See [Common Patterns: Coverage Targets](../COMMON_PATTERNS.md#coverage-targets) for recommended coverage goals.
 
 ## Troubleshooting
 
-### License errors
+For general troubleshooting (license errors, missing data, build configuration), see [Common Patterns: Troubleshooting](../COMMON_PATTERNS.md#general-troubleshooting).
 
-If you see "Invalid license" error:
-```
-ERROR: Invalid license
-```
+### Coverage-specific issues
 
-Solution: Verify CPPTEST_HOME points to correct installation and license is valid
+**Coverage maps not generated?**
+- Ensure clean rebuild with `-DCPPTEST_COVERAGE=ON` enabled from start of configuration
+- Verify `cpptest-coverage/${PROJECT_NAME}/` directory exists after build
 
-### Coverage map errors
-
-If you see "cannot find FunctionIds" errors:
-
-Solution: Perform a clean rebuild with `-DCPPTEST_COVERAGE=ON` enabled from the start
-
-### No coverage data collected
-
-If coverage shows 0% after running tests:
-
-1. Verify instrumentation occurred during build (look for cpptestcc in build output)
-2. Ensure tests actually ran (check for PASSED/FAILED test output)
-3. Confirm coverage workspace exists: `cpptest-coverage/${PROJECT_NAME}/`
+**Instrumentation not detected?**
+- Look for `cpptestcc` compiler wrapper in build output
+- If missing, verify `CPPTEST_HOME` is correct and in PATH
 
 ## Example workflow
 
 ```bash
-# 1. Setup
 export CPPTEST_HOME=/home/gtrofimov/parasoft/2025.2/ct/cpptest-ct
-
-# 2. Clean build with instrumentation
 cd /home/gtrofimov/parasoft/git/atm_cpp14
 rm -rf build && mkdir build && cd build
-cmake -DCPPTEST_COVERAGE=ON ..
-make -j4
-
-# 3. Run tests
+cmake -DCPPTEST_COVERAGE=ON .. && make -j4
 ./atm_gtest
-
-# 4. Generate reports
 make cpptestcov-compute cpptestcov-report
-
-# 5. Review output - look for coverage summary at end of report
 ```
 
 ## Output locations
 
-- **Coverage database**: `/home/gtrofimov/parasoft/git/atm_cpp14/.coverage/`
-- **Coverage maps**: `/home/gtrofimov/parasoft/git/atm_cpp14/build/cpptest-coverage/`
-- **Console report**: Displayed when running `make cpptestcov-report`
-- **XML metrics**: Generated in build directory
-- **Filtered report** (optional): `build/coverage_report.filtered.txt`
-- **Delta summary** (optional): `build/coverage_delta_summary.txt` or `reports/coverage_delta_summary.txt`
+- **Coverage database**: `.coverage/`
+- **Coverage maps**: `build/cpptest-coverage/`
+- **Report**: `build/coverage_report.txt`
+- **Summary**: `reports/summary/coverage_summary.md`
 
 ## Coverage script options
 
-You can enable optional behavior by setting environment variables before running
-`run-coverage.sh`:
+Environment variables:
 
-- `CLEAN_COVERAGE=1` to delete stale `.clog` and `.coverage` data before rebuild.
-- `AUTO_REBUILD_ON_MISMATCH=1` to retry a clean rebuild if coverage compute fails.
-- `WRITE_DELTA_SUMMARY=1` to write an LC/MCDC by-file summary next to the HTML report.
-- `REPORT_FILTER_PATHS=1` to generate a filtered report with only `src/` and `include/`.
-- `REPORT_FILTER_REGEX="/src/|/include/"` to customize the filter path regex.
-- `OUTPUT_JSON=1` to write a structured JSON summary.
-- `JSON_OUTPUT_PATH=/path/to/file.json` to customize the JSON output path.
-- `JSON_OUTPUT_STDOUT=1` to also print the JSON to stdout.
+- `CLEAN_COVERAGE=1` - Delete stale coverage data before rebuild
+- `AUTO_REBUILD_ON_MISMATCH=1` - Retry clean rebuild if compute fails
+- `WRITE_DELTA_SUMMARY=1` - Write LC/MCDC by-file summary
+- `REPORT_FILTER_PATHS=1` - Filter report to `src/` and `include/`
+- `OUTPUT_JSON=1` - Write JSON summary
+- `SUMMARY_DIR=/path` - Customize summary output location
 
 ## Viewing coverage in VS Code
 

@@ -67,17 +67,7 @@ With MCP tools, Copilot can also:
 
 ## Coverage metrics explained
 
-The tool measures multiple types of coverage:
-
-| Metric | Name | What it measures |
-|--------|------|------------------|
-| LC | Line Coverage | % of executable lines run |
-| SC | Statement Coverage | % of statements executed |
-| BC | Branch Coverage | % of branch directions taken |
-| DC | Decision Coverage | % of decisions evaluated |
-| MCDC | Modified Condition/Decision Coverage | High-rigor metric for branch combinations |
-| FC | Function Coverage | % of functions called |
-| CC | Call Coverage | % of function calls made |
+For detailed metric descriptions and coverage targets, see [Common Patterns: Coverage Metrics](../COMMON_PATTERNS.md#coverage-metrics-cctest-ct).
 
 ## Current project coverage
 
@@ -115,17 +105,9 @@ export CPPTEST_HOME=/home/gtrofimov/parasoft/2025.2/ct/cpptest-ct
 
 ## Troubleshooting
 
-**License errors?**
-- Verify CPPTEST_HOME points to correct installation
-- Check license file in cpptest-ct directory
+For general troubleshooting guidance, see [Common Patterns: Troubleshooting](../COMMON_PATTERNS.md#general-troubleshooting).
 
-**No coverage data?**
-- Ensure build includes `-DCPPTEST_COVERAGE=ON` flag
-- Confirm tests actually ran (check for PASSED/FAILED output)
-
-**Build failures?**
-- Clean build: `rm -rf build/`
-- Use `-DCPPTEST_COVERAGE=ON` from cmake configure step
+**Coverage-specific issues?** Check SKILL.md for coverage map errors and instrumentation detection.
 
 ## Learn more
 

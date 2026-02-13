@@ -11,6 +11,8 @@ COMPILER="${COMPILER:-gcc_13-64}"
 OUTPUT_DIR="${OUTPUT_DIR:-reports}"
 COMPILE_DB="${COMPILE_DB:-build/compile_commands.json}"
 TEST_CONFIG="${TEST_CONFIG:-builtin://MISRA C++ 2023}"
+SUMMARY_DIR="${SUMMARY_DIR:-$PROJECT_ROOT/reports/summary}"
+SUMMARY_STDOUT="${SUMMARY_STDOUT:-1}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -93,37 +95,16 @@ detect_compiler() {
     fi
 }
 
-prepare_output() {
-    print_step "Preparing output directory..."
-    mkdir -p "$OUTPUT_DIR"
-    print_success "Output directory ready: $OUTPUT_DIR"
-}
 
-build_cpptestcli_command() {
-    print_step "Building cpptestcli command..."
-    
-    echo "$CPPTEST_STD/cpptestcli -config '$TEST_CONFIG' -compiler $COMPILER -module . -exclude '**/googletest/**' -exclude '**/googlemock/**' -exclude '**/tests/**' -input $COMPILE_DB -report $OUTPUT_DIR/misra_cpp_2023"
-}
 
 run_analysis() {
+    mkdir -p "$OUTPUT_DIR"
     print_step "Running MISRA C++ 2023 analysis..."
-    print_step "Using compilation database: $COMPILE_DB"
-    print_step "Excluding: **/googletest/**, **/googlemock/**, **/tests/**"
     
     cd "$PROJECT_ROOT"
-    
-    # Execute cpptestcli with compilation database
-    $CPPTEST_STD/cpptestcli \
-        -config "$TEST_CONFIG" \
-        -compiler "$COMPILER" \
-        -module . \
-        -exclude '**/googletest/**' \
-        -exclude '**/googlemock/**' \
-        -exclude '**/tests/**' \
-        -input "$COMPILE_DB" \
-        -report "$OUTPUT_DIR/misra_cpp_2023" 2>&1 | tee misra_analysis.log
-    
-    # cpptestcli may exit with non-zero on warnings, so we don't strict check here
+    $CPPTEST_STD/cpptestcli -config "$TEST_CONFIG" -compiler "$COMPILER" -module . \
+        -exclude '**/googletest/**' -exclude '**/googlemock/**' -exclude '**/tests/**' \
+        -input "$COMPILE_DB" -report "$OUTPUT_DIR/misra_cpp_2023" 2>&1 | tee misra_analysis.log
     print_success "Analysis completed"
 }
 
@@ -142,24 +123,47 @@ extract_summary() {
         return
     fi
 
-    # Extract violation count and stats from XML
-    TOTAL_VIOLATIONS=$(grep -o 'violations="[0-9]*"' "$report_xml" 2>/dev/null | head -1 | grep -o '[0-9]*' || echo "0")
-    
-    echo ""
-    echo -e "${YELLOW}Analysis Summary:${NC}"
-    echo "  Total Violations: $TOTAL_VIOLATIONS"
     echo ""
     echo -e "${YELLOW}Generated Reports:${NC}"
     echo "  HTML:  $report_dir/report.html"
     echo "  XML:   $report_dir/report.xml"
     echo ""
-    echo -e "${YELLOW}Top Violations by Rule:${NC}"
-    grep -o "MISRACPP2023-[^:]*" "$report_xml" 2>/dev/null | sed 's/-.*$//' | sort | uniq -c | sort -rn | head -5 | awk '{print "  "$2": "$1" occurrence(s)"}' || echo "  No violations found"
-    echo ""
-    echo -e "${BLUE}Use GitHub Copilot to analyze violations:${NC}"
-    echo "  Ask: 'Parse violations from $report_dir/report.xml and show critical issues'"
+    echo -e "${BLUE}Summary Output (MCP):${NC}"
+    echo "  Use Copilot MCP to parse: $report_dir/report.xml"
+    echo "  Target summary: $SUMMARY_DIR/misra_summary.md"
 
-    write_summary_json "$report_xml" "$report_dir"
+    emit_mcp_summary_hint "$report_xml" "$report_dir"
+}
+
+emit_mcp_summary_hint() {
+    local report_xml="$1"
+    local report_dir="$2"
+    local summary_path="$SUMMARY_DIR/misra_summary.md"
+
+    mkdir -p "$SUMMARY_DIR"
+
+    {
+        echo "# MISRA C++ 2023 Summary"
+        echo ""
+        echo "Generated: $(date +%Y-%m-%d)"
+        echo "Source: $report_xml"
+        echo ""
+        echo "## MCP Summary"
+        echo ""
+        echo "Use the MCP tool to parse violations and update this file."
+        echo "Example prompt:" 
+        echo "Parse violations from $report_xml and write a standard summary to $summary_path."
+        echo ""
+        echo "## Reports"
+        echo ""
+        echo "- $report_dir/report.html"
+        echo "- $report_dir/report.xml"
+    } > "$summary_path"
+
+    if [ "$SUMMARY_STDOUT" -eq 1 ]; then
+        echo ""
+        cat "$summary_path"
+    fi
 }
 
 write_summary_json() {
@@ -238,7 +242,6 @@ main() {
     check_prerequisites
     ensure_compile_db
     detect_compiler
-    prepare_output
     run_analysis
     extract_summary
     

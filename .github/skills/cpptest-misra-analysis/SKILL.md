@@ -21,144 +21,37 @@ This skill provides automated MISRA C++ 2023 static analysis using Parasoft C++t
 
 ## Prerequisites
 
-### Environment setup
-- **C++test Standard installed**: Available via `$CPPTEST_STD` environment variable
-- **C++ compiler**: GCC, Clang, or other compatible compiler installed and available in PATH
-- **Linux/macOS/Windows**: Compatible with all major platforms
-- **Python 3** (optional): For enhanced report parsing and analysis
-
-### Verify installation
-
-```bash
-# Check CPPTEST_STD variable is set
-echo $CPPTEST_STD
-
-# Verify cpptestcli is available
-$CPPTEST_STD/cpptestcli -help
-
-# List available MISRA configurations
-$CPPTEST_STD/cpptestcli -list-configs | grep MISRA
-```
-
-### Detect compiler configuration
-
-```bash
-# Auto-detect your C++ compiler
-$CPPTEST_STD/cpptestcli -detect-compiler gcc
-
-# List all available compilers
-$CPPTEST_STD/cpptestcli -list-compilers
-```
+- `CPPTEST_STD` environment variable set to C++test Standard installation
+- C++ compiler installed (GCC, Clang, or compatible)
+- CMake 3.11+ (optional, for `compile_commands.json`)
 
 ## Step-by-step process
 
-### Step 1: Generate compilation database with CMake
-
-First, create a compilation database to provide exact compiler flags:
+### 1. Generate compilation database
 
 ```bash
-# Create build directory
-cmake -B build
-
-# Build project (generates compile_commands.json)
-cmake --build build
+cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && cmake --build build
 ```
 
-This creates `build/compile_commands.json` containing all compiler invocations.
-
-If `compile_commands.json` is missing, the helper script will regenerate it
-automatically using:
+### 2. Run MISRA analysis
 
 ```bash
-cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-cmake --build build
+$CPPTEST_STD/cpptestcli -config "builtin://MISRA C++ 2023" -compiler gcc_13-64 \
+  -module . -exclude '**/googletest/**' -exclude '**/tests/**' \
+  -input build/compile_commands.json -report reports/misra_cpp_2023
 ```
 
-### Step 2: Verify CPPTEST_STD and detect compiler
+Or use the helper script:
 
 ```bash
-# Verify C++test Standard is installed
-echo $CPPTEST_STD
-$CPPTEST_STD/cpptestcli -help
-
-# Auto-detect your compiler
-$CPPTEST_STD/cpptestcli -detect-compiler gcc
-# Output: gcc_13-64 (or similar)
-```
-
-### Step 3: Run MISRA analysis using compilation database
-
-The recommended approach uses the compilation database for accurate analysis:
-
-```bash
-cd /path/to/project
-
-$CPPTEST_STD/cpptestcli \
-  -config "builtin://MISRA C++ 2023" \
-  -compiler gcc_13-64 \
-  -module . \
-  -exclude '**/googletest/**' \
-  -exclude '**/googlemock/**' \
-  -exclude '**/tests/**' \
-  -input build/compile_commands.json \
-  -report reports/misra_cpp_2023
-```
-
-**Parameters explained:**
-- `-config "builtin://MISRA C++ 2023"`: MISRA ruleset
-- `-compiler gcc_13-64`: Detected compiler ID
-- `-module .`: Analyze current module/project
-- `-exclude '**/googletest/**'`: Skip test framework
-- `-exclude '**/googlemock/**'`: Skip mock framework  
-- `-exclude '**/tests/**'`: Skip test code
-- `-input build/compile_commands.json`: Use compilation database
-- `-report reports/misra_cpp_2023`: Output report location
-
-### Step 4: Review reports
-
-```bash
-# Check violation summary in log
-tail -50 misra_analysis.log
-
-# View HTML report
-xdg-open reports/report.html  # Linux
-open reports/report.html      # macOS
-
-# Analyze XML with Copilot Chat
-# Ask: "Parse violations from reports/report.xml and show critical issues"
-
-The helper script also writes a machine-readable summary to:
-`reports/misra_cpp_2023/summary.json` with severity counts and top rules.
-```
-
-### Automated approach: Use the provided script
-
-For convenience, use the automation script:
-
-```bash
-# Run with defaults
-./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh
-
-# Or with custom settings
-export COMPILER=clang_17_0-x86_64
-export COMPILE_DB=build/compile_commands.json
-export OUTPUT_DIR=reports
 ./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh
 ```
 
-### Legacy approach: Direct file compilation (not recommended)
+### 3. Review reports
 
-If compilation database is unavailable, specify files directly:
-
-```bash
-$CPPTEST_STD/cpptestcli \
-  -config "builtin://MISRA C++ 2023" \
-  -compiler gcc_13-64 \
-  -- gcc -Iinclude -std=c++14 src/Account.cxx src/ATM.cxx \
-  -report reports/misra_cpp_2023
-```
-
-⚠️ **Note:** This approach requires manually specifying all include paths and files, which is error-prone. The compilation database method (-input) is strongly preferred.
+- **HTML**: `reports/misra_cpp_2023/report.html`
+- **XML**: `reports/misra_cpp_2023/report.xml`
+- **JSON Summary**: `reports/misra_cpp_2023/summary.json`
 
 ## Key considerations
 
@@ -175,130 +68,34 @@ $CPPTEST_STD/cpptestcli \
 
 ### Common MISRA C++ 2023 violations
 
-| Violation | Issue | Fix |
-|-----------|-------|-----|
-| `MISRACPP2023-6_9_2-a` | Using `int` type | Use sized types: `int32_t`, `uint16_t` |
-| `MISRACPP2023-15_0_2-a` | Move constructor missing `noexcept` | Add `noexcept` specifier |
-| `MISRACPP2023-21_6_2-a` | `new` operator usage | Use smart pointers (`std::unique_ptr`) |
-| `MISRACPP2023-8_2_2-b` | C-style casts | Use `static_cast`, `reinterpret_cast` |
-| `MISRACPP2023-7_11_1-a` | Using `0` or `NULL` for null pointers | Use `nullptr` |
+For a comprehensive table of typical violations and fixes, see [Common Patterns: MISRA Violations](../COMMON_PATTERNS.md#misra-c-2023-common-violations).
 
 ## Examples
 
-### Example 1: Analyze C++ project using compilation database
-
 ```bash
-cd /home/user/my_project
-
-# Build with CMake (generates compile_commands.json)
-cmake -B build && cmake --build build
-
-# Run MISRA analysis
-$CPPTEST_STD/cpptestcli \
-  -config "builtin://MISRA C++ 2023" \
-  -compiler gcc_13-64 \
-  -module . \
-  -exclude '**/googletest/**' \
-  -exclude '**/tests/**' \
-  -input build/compile_commands.json \
-  -report reports/misra_cpp_2023
-```
-
-### Example 2: Using the automation script
-
-```bash
-# Run with default settings
+# Quick start
+export CPPTEST_STD=/path/to/std/cpptest
 ./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh
 
-# Or with custom environment
-export PROJECT_ROOT=/path/to/project
+# Custom compiler
 export COMPILER=clang_17_0-x86_64
-export COMPILE_DB=build/compile_commands.json
 export OUTPUT_DIR=my_reports
 ./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh
 ```
 
-### Example 3: Complete analysis with multi-level exclusions
-
-```bash
-$CPPTEST_STD/cpptestcli \
-  -config "builtin://MISRA C++ 2023" \
-  -compiler gcc_13-64 \
-  -module . \
-  -exclude '**/googletest/**' \
-  -exclude '**/googlemock/**' \
-  -exclude '**/tests/**' \
-  -exclude '**/third_party/**' \
-  -exclude '**/vendor/**' \
-  -input build/compile_commands.json \
-  -report reports/misra_cpp_2023
-```
-
-### Example 4: Custom configuration with different MISRA rules
-
-```bash
-# Using a custom MISRA configuration
-$CPPTEST_STD/cpptestcli \
-  -config "user://my-misra-config" \
-  -compiler gcc_13-64 \
-  -module . \
-  -exclude '**/tests/**' \
-  -input build/compile_commands.json \
-  -report reports/custom_analysis
-```
-
-# Review HTML in browser
-open reports/report.html
-
-# Parse XML for CI/CD integration
-grep -o "violations-suppressed=\"[0-9]*\"" reports/report.xml
-```
-
 ## Troubleshooting
 
-### Issue: "Input scope contains no elements - nothing to test"
+For general troubleshooting, see [Common Patterns: Troubleshooting](../COMMON_PATTERNS.md#general-troubleshooting).
 
-**Solution**: Ensure you provide the compilation command after `--`:
+### MISRA-specific issues
 
-```bash
-# Wrong
-$CPPTEST_STD/cpptestcli -config "builtin://MISRA C++ 2023" -module .
+**Input scope contains no elements:**
+- Ensure you provide the compilation command after `--` or use `-input` with compilation database
+- For database method: verify `-input build/compile_commands.json` is correct path
 
-# Correct
-$CPPTEST_STD/cpptestcli -config "builtin://MISRA C++ 2023" \
-  -compiler gcc_13-64 \
-  -- gcc -Iinclude src/file.cpp
-```
-
-### Issue: Compiler not found
-
-**Solution**: Use `-detect-compiler` to find available compilers:
-
-```bash
-$CPPTEST_STD/cpptestcli -detect-compiler gcc
-$CPPTEST_STD/cpptestcli -list-compilers | grep gcc
-```
-
-### Issue: Missing include files during analysis
-
-**Solution**: Add all required `-I` flags to the compilation command:
-
-```bash
-# Include multiple paths
--- gcc -Iinclude -Iinclude/subsystem -Ithird_party/boost src/file.cpp
-```
-
-### Issue: Reports not generated
-
-**Solution**: Verify write permissions and output directory:
-
-```bash
-mkdir -p reports
-chmod 755 reports
-
-# Run with verbose output
-$CPPTEST_STD/cpptestcli ... -report reports/misra -verbose
-```
+**Report not in expected location:**
+- Check the specified `-report` directory path
+- Verify directory permissions are writable
 
 ## Advanced Report Analysis with C++test MCP
 

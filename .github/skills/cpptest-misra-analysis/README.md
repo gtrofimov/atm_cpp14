@@ -55,15 +55,7 @@ SOURCE_FILES="src/Account.cxx src/Bank.cxx" \
 
 ## Common Violations
 
-Typical issues found by MISRA C++ 2023:
-
-- **Integer types**: Use of bare `int` type (use `int32_t`, `uint16_t`)
-- **Move constructors**: Missing `noexcept` specifier
-- **Dynamic allocation**: Use of `new` operator (prefer smart pointers)
-- **Null pointers**: Using `0` or `NULL` (use `nullptr`)
-- **Casting**: C-style casts (use `static_cast`, `reinterpret_cast`)
-- **Using directives**: Global namespace `using` declarations
-- **Switch statements**: Missing `default` labels
+For a comprehensive table of typical MISRA violations and fixes, see [Common Patterns: MISRA Violations](../COMMON_PATTERNS.md#misra-c-2023-common-violations).
 
 ## Output Files
 
@@ -120,17 +112,9 @@ $CPPTEST_STD/cpptestcli \
 
 ## Troubleshooting
 
-**Error: "Input scope contains no elements"**
-- Ensure you provide compilation command after `--`
+For general troubleshooting (missing compiler, include paths, output permissions), see [Common Patterns: Troubleshooting](../COMMON_PATTERNS.md#general-troubleshooting).
 
-**Error: "Compiler not found"**
-- Run `$CPPTEST_STD/cpptestcli -list-compilers` to see available compilers
-
-**No source files found**
-- Verify include paths and source file patterns are correct
-- Check that files exist: `ls -la src/*.cxx include/`
-
-**Missing compile_commands.json**
+**Missing compile_commands.json?**
 - The helper script will regenerate it using CMake if it is missing
 - Ensure CMake is available and the project configures successfully
 
