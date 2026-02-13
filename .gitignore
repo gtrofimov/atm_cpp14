@@ -11,3 +11,4 @@ ATM_Cpp14_lib.a
 .cpptest
 reports
 Debug
+.github/skills/**/misra_analysis*.log

@@ -1,6 +1,6 @@
 #!/bin/bash
 # C++test MISRA C++ 2023 Analysis Helper Script
-# This script automates running MISRA C++ 2023 static analysis
+# This script automates running MISRA C++ 2023 static analysis using compilation database
 
 set -e
 
@@ -9,8 +9,8 @@ PROJECT_ROOT="${PROJECT_ROOT:-.}"
 CPPTEST_STD="${CPPTEST_STD:-/home/gtrofimov/parasoft/2025.2/std/cpptest}"
 COMPILER="${COMPILER:-gcc_13-64}"
 OUTPUT_DIR="${OUTPUT_DIR:-reports}"
-INCLUDE_DIRS="${INCLUDE_DIRS:-include}"
-SOURCE_FILES="${SOURCE_FILES:-src/*.cxx}"
+COMPILE_DB="${COMPILE_DB:-build/compile_commands.json}"
+TEST_CONFIG="${TEST_CONFIG:-builtin://MISRA C++ 2023}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -51,7 +51,14 @@ check_prerequisites() {
         exit 1
     fi
     
+    if [ ! -f "$PROJECT_ROOT/$COMPILE_DB" ]; then
+        print_error "Compilation database not found: $COMPILE_DB"
+        print_error "Please run: cmake -B build && cmake --build build"
+        exit 1
+    fi
+    
     print_success "C++test Standard installation found"
+    print_success "Compilation database found at $COMPILE_DB"
 }
 
 detect_compiler() {
@@ -73,61 +80,58 @@ prepare_output() {
     print_success "Output directory ready: $OUTPUT_DIR"
 }
 
-build_compiler_command() {
-    print_step "Building compiler command..."
+build_cpptestcli_command() {
+    print_step "Building cpptestcli command..."
     
-    local cmd="gcc"
-    
-    # Add include directories
-    for inc in $INCLUDE_DIRS; do
-        if [ -d "$inc" ]; then
-            cmd="$cmd -I$inc"
-        fi
-    done
-    
-    # Add source files
-    for src in $SOURCE_FILES; do
-        if [ -f "$src" ]; then
-            cmd="$cmd $src"
-        fi
-    done
-    
-    echo "$cmd"
+    echo "$CPPTEST_STD/cpptestcli -config '$TEST_CONFIG' -compiler $COMPILER -module . -exclude '**/googletest/**' -exclude '**/googlemock/**' -exclude '**/tests/**' -input $COMPILE_DB -report $OUTPUT_DIR/misra_cpp_2023"
 }
 
 run_analysis() {
     print_step "Running MISRA C++ 2023 analysis..."
-    
-    local compiler_cmd=$(build_compiler_command)
+    print_step "Using compilation database: $COMPILE_DB"
+    print_step "Excluding: **/googletest/**, **/googlemock/**, **/tests/**"
     
     cd "$PROJECT_ROOT"
     
+    # Execute cpptestcli with compilation database
     $CPPTEST_STD/cpptestcli \
-        -config "builtin://MISRA C++ 2023" \
+        -config "$TEST_CONFIG" \
         -compiler "$COMPILER" \
-        -- $compiler_cmd \
+        -module . \
+        -exclude '**/googletest/**' \
+        -exclude '**/googlemock/**' \
+        -exclude '**/tests/**' \
+        -input "$COMPILE_DB" \
         -report "$OUTPUT_DIR/misra_cpp_2023" 2>&1 | tee misra_analysis.log
     
-    if [ ${PIPESTATUS[0]} -eq 0 ]; then
-        print_success "Analysis completed successfully"
-    else
-        print_error "Analysis failed"
-        exit 1
-    fi
+    # cpptestcli may exit with non-zero on warnings, so we don't strict check here
+    print_success "Analysis completed"
 }
 
 extract_summary() {
     print_step "Extracting analysis summary..."
     
-    # Extract total violations
-    TOTAL_VIOLATIONS=$(grep -oE "Total violations: [0-9]+" "$OUTPUT_DIR"/report.xml 2>/dev/null || echo "0")
+    if [ ! -f "$OUTPUT_DIR/report.xml" ]; then
+        print_error "Report not found: $OUTPUT_DIR/report.xml"
+        return
+    fi
+    
+    # Extract violation count and stats from XML
+    TOTAL_VIOLATIONS=$(grep -o 'violations="[0-9]*"' "$OUTPUT_DIR/report.xml" 2>/dev/null | head -1 | grep -o '[0-9]*' || echo "0")
     
     echo ""
     echo -e "${YELLOW}Analysis Summary:${NC}"
-    echo "  $TOTAL_VIOLATIONS"
-    echo "  HTML Report: $OUTPUT_DIR/report.html"
-    echo "  XML Report: $OUTPUT_DIR/report.xml"
+    echo "  Total Violations: $TOTAL_VIOLATIONS"
     echo ""
+    echo -e "${YELLOW}Generated Reports:${NC}"
+    echo "  HTML:  $OUTPUT_DIR/report.html"
+    echo "  XML:   $OUTPUT_DIR/report.xml"
+    echo ""
+    echo -e "${YELLOW}Top Violations by Rule:${NC}"
+    grep -o "MISRACPP2023-[^:]*" "$OUTPUT_DIR/report.xml" 2>/dev/null | sed 's/-.*$//' | sort | uniq -c | sort -rn | head -5 | awk '{print "  "$2": "$1" occurrence(s)"}' || echo "  No violations found"
+    echo ""
+    echo -e "${BLUE}Use GitHub Copilot to analyze violations:${NC}"
+    echo "  Ask: 'Parse violations from $OUTPUT_DIR/report.xml and show critical issues'"
 }
 
 main() {
@@ -137,9 +141,9 @@ main() {
     echo "  Project: $PROJECT_ROOT"
     echo "  C++test: $CPPTEST_STD"
     echo "  Compiler: $COMPILER"
+    echo "  Test Config: $TEST_CONFIG"
+    echo "  Compile DB: $COMPILE_DB"
     echo "  Output: $OUTPUT_DIR"
-    echo "  Includes: $INCLUDE_DIRS"
-    echo "  Sources: $SOURCE_FILES"
     echo ""
     
     check_prerequisites

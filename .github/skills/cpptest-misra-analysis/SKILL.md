@@ -6,7 +6,9 @@ license: MIT
 
 # C++test MISRA C++ 2023 Static Analysis
 
-This skill provides automated MISRA C++ 2023 static analysis using Parasoft C++test Standard. MISRA C++ is a set of guidelines for safely writing C++ code in safety-critical embedded systems and high-integrity applications.
+This skill provides automated MISRA C++ 2023 static analysis using Parasoft C++test Standard with integrated AI-powered insights from MCP (Model Context Protocol) capabilities.
+
+**Key Enhancement:** This skill now leverages C++test's MCP Server extension to enable seamless integration with AI agents like GitHub Copilot, providing context-aware analysis, rule interpretation, and automated remediation suggestions.
 
 ## When to use this skill
 
@@ -23,6 +25,7 @@ This skill provides automated MISRA C++ 2023 static analysis using Parasoft C++t
 - **C++test Standard installed**: Available via `$CPPTEST_STD` environment variable
 - **C++ compiler**: GCC, Clang, or other compatible compiler installed and available in PATH
 - **Linux/macOS/Windows**: Compatible with all major platforms
+- **Python 3** (optional): For enhanced report parsing and analysis
 
 ### Verify installation
 
@@ -49,93 +52,102 @@ $CPPTEST_STD/cpptestcli -list-compilers
 
 ## Step-by-step process
 
-### Step 1: Prepare your source files
+### Step 1: Generate compilation database with CMake
 
-Identify all C++ source files to be analyzed:
+First, create a compilation database to provide exact compiler flags:
 
 ```bash
-# List all C++ source files
-find . -name "*.cpp" -o -name "*.cxx" -o -name "*.cc" -o -name "*.c++"
+# Create build directory
+cmake -B build
 
-# Identify include directories
-find . -type d -name "include" -o -name "inc"
+# Build project (generates compile_commands.json)
+cmake --build build
 ```
 
-### Step 2: Detect compiler configuration
+This creates `build/compile_commands.json` containing all compiler invocations.
 
-Before running analysis, detect your compiler version:
+### Step 2: Verify CPPTEST_STD and detect compiler
 
 ```bash
-# For GCC
+# Verify C++test Standard is installed
+echo $CPPTEST_STD
+$CPPTEST_STD/cpptestcli -help
+
+# Auto-detect your compiler
 $CPPTEST_STD/cpptestcli -detect-compiler gcc
-
-# For Clang
-$CPPTEST_STD/cpptestcli -detect-compiler clang
-
-# Output will show the compiler ID (e.g., gcc_13-64, clang_17_0-x86_64)
+# Output: gcc_13-64 (or similar)
 ```
 
-### Step 3: Create output directories
+### Step 3: Run MISRA analysis using compilation database
 
-```bash
-# Create directory for reports
-mkdir -p reports
-```
-
-### Step 4: Run MISRA C++ 2023 analysis
-
-#### Option A: Direct file compilation command
-
-Specify source files and compiler flags directly:
+The recommended approach uses the compilation database for accurate analysis:
 
 ```bash
 cd /path/to/project
 
-# Single file analysis
 $CPPTEST_STD/cpptestcli \
   -config "builtin://MISRA C++ 2023" \
   -compiler gcc_13-64 \
-  -- gcc -Iinclude src/MyFile.cpp \
+  -module . \
+  -exclude '**/googletest/**' \
+  -exclude '**/googlemock/**' \
+  -exclude '**/tests/**' \
+  -input build/compile_commands.json \
   -report reports/misra_cpp_2023
 ```
 
-#### Option B: Multiple source files
+**Parameters explained:**
+- `-config "builtin://MISRA C++ 2023"`: MISRA ruleset
+- `-compiler gcc_13-64`: Detected compiler ID
+- `-module .`: Analyze current module/project
+- `-exclude '**/googletest/**'`: Skip test framework
+- `-exclude '**/googlemock/**'`: Skip mock framework  
+- `-exclude '**/tests/**'`: Skip test code
+- `-input build/compile_commands.json`: Use compilation database
+- `-report reports/misra_cpp_2023`: Output report location
+
+### Step 4: Review reports
 
 ```bash
-$CPPTEST_STD/cpptestcli \
-  -config "builtin://MISRA C++ 2023" \
-  -compiler gcc_13-64 \
-  -- gcc -Iinclude src/Account.cxx src/ATM.cxx src/Bank.cxx \
-  -report reports/misra_cpp_2023
-```
+# Check violation summary in log
+tail -50 misra_analysis.log
 
-#### Option C: Build tracing
-
-Capture analysis from your actual build command:
-
-```bash
-$CPPTEST_STD/cpptestcli \
-  -config "builtin://MISRA C++ 2023" \
-  -compiler gcc_13-64 \
-  -trace "make clean all" \
-  -report reports/misra_cpp_2023
-```
-
-### Step 5: Review analysis results
-
-Reports are generated in multiple formats:
-
-```bash
-# View HTML report (requires browser)
-open reports/report.html  # macOS
+# View HTML report
 xdg-open reports/report.html  # Linux
+open reports/report.html      # macOS
 
-# View XML report (for parsing/CI integration)
-cat reports/report.xml
-
-# Check command output for summary
-tail -20 misra_analysis.log
+# Analyze XML with Copilot Chat
+# Ask: "Parse violations from reports/report.xml and show critical issues"
 ```
+
+### Automated approach: Use the provided script
+
+For convenience, use the automation script:
+
+```bash
+# Run with defaults
+./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh
+
+# Or with custom settings
+export COMPILER=clang_17_0-x86_64
+export COMPILE_DB=build/compile_commands.json
+export OUTPUT_DIR=reports
+./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh
+```
+
+### Legacy approach: Direct file compilation (not recommended)
+
+If compilation database is unavailable, specify files directly:
+
+```bash
+$CPPTEST_STD/cpptestcli \
+  -config "builtin://MISRA C++ 2023" \
+  -compiler gcc_13-64 \
+  -- gcc -Iinclude -std=c++14 src/Account.cxx src/ATM.cxx \
+  -report reports/misra_cpp_2023
+```
+
+⚠️ **Note:** This approach requires manually specifying all include paths and files, which is error-prone. The compilation database method (-input) is strongly preferred.
 
 ## Key considerations
 
@@ -162,38 +174,67 @@ tail -20 misra_analysis.log
 
 ## Examples
 
-### Example 1: Analyze C++ project with single header include path
+### Example 1: Analyze C++ project using compilation database
 
 ```bash
 cd /home/user/my_project
 
+# Build with CMake (generates compile_commands.json)
+cmake -B build && cmake --build build
+
+# Run MISRA analysis
 $CPPTEST_STD/cpptestcli \
   -config "builtin://MISRA C++ 2023" \
   -compiler gcc_13-64 \
-  -- gcc -Iinclude src/main.cpp src/utils.cpp \
+  -module . \
+  -exclude '**/googletest/**' \
+  -exclude '**/tests/**' \
+  -input build/compile_commands.json \
   -report reports/misra_cpp_2023
 ```
 
-### Example 2: Complete analysis with Clang compiler
+### Example 2: Using the automation script
+
+```bash
+# Run with default settings
+./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh
+
+# Or with custom environment
+export PROJECT_ROOT=/path/to/project
+export COMPILER=clang_17_0-x86_64
+export COMPILE_DB=build/compile_commands.json
+export OUTPUT_DIR=my_reports
+./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh
+```
+
+### Example 3: Complete analysis with multi-level exclusions
 
 ```bash
 $CPPTEST_STD/cpptestcli \
   -config "builtin://MISRA C++ 2023" \
-  -compiler clang_17_0-x86_64 \
-  -- clang++ -std=c++14 -Iinclude -Ithird_party/include \
-    src/Account.cxx src/Bank.cxx \
-  -report reports/misra_analysis
+  -compiler gcc_13-64 \
+  -module . \
+  -exclude '**/googletest/**' \
+  -exclude '**/googlemock/**' \
+  -exclude '**/tests/**' \
+  -exclude '**/third_party/**' \
+  -exclude '**/vendor/**' \
+  -input build/compile_commands.json \
+  -report reports/misra_cpp_2023
 ```
 
-### Example 3: Generate both HTML and XML reports
+### Example 4: Custom configuration with different MISRA rules
 
 ```bash
-# Default behavior generates both formats
+# Using a custom MISRA configuration
 $CPPTEST_STD/cpptestcli \
-  -config "builtin://MISRA C++ 2023" \
+  -config "user://my-misra-config" \
   -compiler gcc_13-64 \
-  -- gcc -Iinclude src/*.cxx \
-  -report reports/misra_cpp_2023
+  -module . \
+  -exclude '**/tests/**' \
+  -input build/compile_commands.json \
+  -report reports/custom_analysis
+```
 
 # Review HTML in browser
 open reports/report.html
@@ -247,6 +288,77 @@ chmod 755 reports
 # Run with verbose output
 $CPPTEST_STD/cpptestcli ... -report reports/misra -verbose
 ```
+
+## Advanced Report Analysis with C++test MCP
+
+C++test's MCP (Model Context Protocol) Server extension provides direct access to violation parsing without additional scripts.
+
+### Using Copilot Chat for Report Analysis
+
+In VS Code Copilot Chat, you can ask:
+
+```
+@GitHub Copilot
+I have a MISRA C++ 2023 analysis report at reports/report.xml. 
+Can you:
+1. Parse the violations
+2. Group by severity  
+3. Show top 10 most frequent violations
+4. Suggest fixes for critical issues
+```
+
+Copilot will automatically:
+- Access the report via C++test MCP integration
+- Extract and categorize all violations
+- Provide severity-based prioritization
+- Suggest remediation strategies
+
+### Programmatic Report Access
+
+The MCP integration allows AI agents to query violations directly:
+
+```python
+# Example: What the MCP tool provides
+violations = [
+  {
+    "rule_id": "MISRACPP2023-6_9_2-a",
+    "message": "Do not use the 'int' standard integer type",
+    "file": "src/Account.cxx",
+    "line": "42",
+    "severity": "4"
+  },
+  ...
+]
+```
+
+### Benefits of MCP-Based Analysis
+
+- **No Dependencies**: No Python or additional tools required
+- **Native Integration**: Direct C++test integration
+- **AI-Powered**: Leverage Copilot for intelligent analysis
+- **Real-time**: Ask questions about violations in chat
+- **Filtered Queries**: Filter by rule, severity, or file
+- **Context-Aware**: Get explanations and fix suggestions
+
+## MCP Server Integration (GitHub Copilot & AI Agents)
+
+C++test's MCP Server extension enables AI agents to:
+
+1. **Access Static Analysis Results**: Get violations and categorize by priority
+2. **Interpret Rules**: Ask Copilot about specific MISRA C++ rules and get explanations
+3. **Propose Fixes**: Get context-aware remediation suggestions in Copilot Chat
+
+### Using with Copilot in VS Code
+
+Ask Copilot questions like:
+- "What does MISRACPP2023-6_9_2-a violation mean?"
+- "How do I fix the unused return value violations in Account.cxx?"
+- "Show me the critical violations in our MISRA analysis"
+
+Copilot can then:
+- Query the C++test analysis results via MCP
+- Provide targeted guidance for violations
+- Generate code fixes aligned with MISRA standards
 
 ## Integration with CI/CD
 

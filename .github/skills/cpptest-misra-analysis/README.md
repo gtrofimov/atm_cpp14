@@ -1,6 +1,10 @@
 # MISRA C++ 2023 Static Analysis Skill
 
-This agent skill provides automated MISRA C++ 2023 static analysis using Parasoft C++test Standard.
+This agent skill provides automated MISRA C++ 2023 static analysis using Parasoft C++test Standard with:
+- **MCP Integration**: Direct C++test report access for AI agents
+- **GitHub Copilot Chat**: Ask questions and get intelligent analysis
+- **No Extra Dependencies**: Leverages built-in C++test MCP capabilities
+- **Severity Categorization**: AI-powered violation prioritization
 
 ## Quick Start
 
@@ -36,7 +40,8 @@ SOURCE_FILES="src/Account.cxx src/Bank.cxx" \
 | File | Purpose |
 |------|---------|
 | `SKILL.md` | Complete skill documentation and instructions |
-| `run-misra-analysis.sh` | Automated analysis script |
+| `run-misra-analysis.sh` | Automated analysis script with compiler detection |
+| `examples.json` | Command examples and violation reference |
 | `README.md` | Quick reference (this file) |
 
 ## Key Features
@@ -116,6 +121,38 @@ $CPPTEST_STD/cpptestcli \
 **No source files found**
 - Verify include paths and source file patterns are correct
 - Check that files exist: `ls -la src/*.cxx include/`
+
+## Advanced: Report Analysis via Copilot Chat
+
+Ask Copilot to analyze your MISRA report using the built-in C++test MCP integration:
+
+**In Copilot Chat (VS Code):**
+
+```
+@GitHub Copilot
+Parse the violations from reports/report.xml and:
+1. Group by severity
+2. Show top 10 most frequent violations
+3. Highlight critical issues
+4. Suggest fixes for high-priority violations
+```
+
+### MCP Capabilities
+
+C++test's MCP Server enables:
+- Direct XML report parsing
+- Violation filtering by rule, severity, or file
+- Rule documentation and explanations
+- Context-aware remediation suggestions
+- No additional tools or dependencies needed
+
+### Benefits Over Custom Tools
+
+✓ **Native Integration** - Uses C++test's built-in analysis system
+✓ **AI-Powered** - Intelligent recommendations from Copilot
+✓ **No Dependencies** - No Python or additional tools required
+✓ **Real-time Queries** - Ask questions in Copilot Chat
+✓ **Always Updated** - Leverages latest C++test features
 
 ## References
 

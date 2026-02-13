@@ -44,12 +44,11 @@ void ATM::showBalance()
 void ATM::showTransations()
 {
     myCurrentAccount->forEachTransaction(
-    		[this] (const std::tuple<UserRequest, double>& tuple)
-    	{
+        [this] (const std::tuple<UserRequest, double>& tuple)
+    {
         myDisplay->showTransaction(std::get<0>(tuple), std::get<1>(tuple));
     });
 }
-
 
 void ATM::makeDeposit(double amount)
 {

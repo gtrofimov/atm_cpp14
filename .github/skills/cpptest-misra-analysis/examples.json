@@ -1,5 +1,5 @@
 {
-  "examples": [
+  "analysis_commands": [
     {
       "name": "Basic MISRA Analysis",
       "description": "Run MISRA C++ 2023 analysis on a single file",
@@ -19,11 +19,6 @@
       "name": "Using Build Trace",
       "description": "Capture analysis from build command",
       "command": "$CPPTEST_STD/cpptestcli -config 'builtin://MISRA C++ 2023' -compiler gcc_13-64 -trace 'make clean all' -report reports/misra_analysis"
-    },
-    {
-      "name": "Clang Compiler",
-      "description": "Run analysis with Clang compiler",
-      "command": "$CPPTEST_STD/cpptestcli -config 'builtin://MISRA C++ 2023' -compiler clang_17_0-x86_64 -- clang++ -std=c++14 -Iinclude src/*.cxx -report reports/misra_analysis"
     },
     {
       "name": "Auto-detect Compiler",
@@ -51,51 +46,121 @@
       "command": "COMPILER=gcc_13-64 INCLUDE_DIRS='include' SOURCE_FILES='src/Account.cxx src/Bank.cxx' ./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh"
     }
   ],
+  "copilot_queries": [
+    {
+      "task": "Parse violation report",
+      "query": "Parse the MISRA violations from reports/report.xml and show me a summary grouped by severity",
+      "what_happens": "Copilot uses C++test MCP to extract violations and categorize by critical/major/minor"
+    },
+    {
+      "task": "Find top violations",
+      "query": "What are the 10 most frequent MISRA violations in reports/report.xml?",
+      "what_happens": "MCP parses report and identifies patterns of recurring violations"
+    },
+    {
+      "task": "Explain a rule",
+      "query": "What does MISRACPP2023-6_9_2-a mean and how do I fix violations of this rule?",
+      "what_happens": "Copilot queries C++test documentation via MCP and provides remediation guidance"
+    },
+    {
+      "task": "Get critical issues",
+      "query": "Show me only the critical (severity 1) violations from my MISRA analysis",
+      "what_happens": "MCP filters violations by severity and presents high-priority issues"
+    },
+    {
+      "task": "Suggest fixes",
+      "query": "Generate code fixes for the 'new' operator violations in Bank.cxx from reports/report.xml",
+      "what_happens": "Copilot analyzes violations and proposes smart pointer replacements"
+    },
+    {
+      "task": "Filter by rule",
+      "query": "Find all violations of rule MISRACPP2023-8_2_2-b in the analysis report",
+      "what_happens": "MCP extracts specific rule violations with locations and messages"
+    }
+  ],
   "common_violations": [
     {
       "rule": "MISRACPP2023-6_9_2-a",
       "violation": "Do not use the 'int' standard integer type",
-      "fix": "Use sized types like int32_t, uint16_t, etc. from <cstdint>"
+      "fix": "Use sized types like int32_t, uint16_t, etc. from <cstdint>",
+      "priority": "HIGH",
+      "impact": "Type safety and portability issues"
     },
     {
       "rule": "MISRACPP2023-15_0_2-a",
       "violation": "User-declared 'move constructor' should have a 'noexcept' specifier",
-      "fix": "Add 'noexcept' to move constructor: Account(Account&&) noexcept = default;"
+      "fix": "Add 'noexcept' to move constructor: Account(Account&&) noexcept = default;",
+      "priority": "MEDIUM",
+      "impact": "Performance and exception safety"
     },
     {
       "rule": "MISRACPP2023-21_6_2-a",
       "violation": "'new' operator should not be used",
-      "fix": "Use smart pointers: std::unique_ptr or std::make_unique"
+      "fix": "Use smart pointers: std::unique_ptr or std::make_unique",
+      "priority": "HIGH",
+      "impact": "Memory safety and RAII compliance"
     },
     {
       "rule": "MISRACPP2023-8_2_2-b",
       "violation": "Do not use a C-style cast",
-      "fix": "Use static_cast<>, reinterpret_cast<>, or dynamic_cast<>"
+      "fix": "Use static_cast<>, reinterpret_cast<>, or dynamic_cast<>",
+      "priority": "MEDIUM",
+      "impact": "Type safety in modern C++"
     },
     {
       "rule": "MISRACPP2023-7_11_1-a",
       "violation": "Prefer 'nullptr' to '0' as the null pointer value",
-      "fix": "Replace NULL and 0 with nullptr"
+      "fix": "Replace NULL and 0 with nullptr",
+      "priority": "MEDIUM",
+      "impact": "Code clarity and type safety"
     },
     {
       "rule": "MISRACPP2023-8_2_7-c",
-      "violation": "Do not cast pointer type to integral type 'bool'",
-      "fix": "Use bool operator or explicit null check: if (ptr != nullptr)"
+      "violation": "Do not cast pointer to 'bool'",
+      "fix": "Use explicit null check: if (ptr != nullptr)",
+      "priority": "HIGH",
+      "impact": "Prevents logic errors"
     },
     {
       "rule": "MISRACPP2023-6_0_3-a",
       "violation": "Do not use the 'using' directive in the global namespace",
-      "fix": "Use explicit qualification or using declaration instead of using namespace"
+      "fix": "Use explicit qualification or using declaration instead of using namespace",
+      "priority": "MEDIUM",
+      "impact": "Namespace pollution prevention"
     },
     {
       "rule": "MISRACPP2023-9_4_2-a",
       "violation": "There is no 'default' label in a switch statement",
-      "fix": "Add default case to all switch statements"
+      "fix": "Add default case to all switch statements",
+      "priority": "HIGH",
+      "impact": "Prevents unhandled cases"
     }
   ],
+  "severity_levels": {
+    "1": "Critical - Fix immediately, likely security or safety issue",
+    "2": "Major - Fix before release, affects functionality",
+    "3": "Minor - Should be addressed, style or best practice issue",
+    "4": "Informational - Good to know, educational or low impact"
+  },
   "report_locations": {
     "html": "reports/report.html",
     "xml": "reports/report.xml",
     "log": "misra_analysis.log"
+  },
+  "mcp_integration": {
+    "description": "C++test Standard 2025.2+ includes MCP Server for AI integration",
+    "capabilities": [
+      "Direct XML report parsing via mcp_cpptest-sa_get_violations_from_report_file",
+      "Filtering by rule_id, severity, or source file",
+      "Rule documentation access",
+      "Integration with GitHub Copilot Chat",
+      "No additional Python or tools required"
+    ],
+    "how_to_use": [
+      "1. Run analysis: ./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh",
+      "2. Open Copilot Chat in VS Code",
+      "3. Ask: 'Parse the violations from reports/report.xml and show critical issues'",
+      "4. Copilot uses MCP to access and analyze the report"
+    ]
   }
 }
