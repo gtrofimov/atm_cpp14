@@ -1,41 +1,47 @@
 #include "Bank.hxx"
 #include "Account.hxx"
 
-Bank::Bank() : myAccounts()
-{
-	myCurrentAccountNumber = 0;
-}
+#include <cstddef>
+#include <memory>
+#include <utility>
 
-Bank::~Bank()
+Bank::Bank() : myAccounts(), myCurrentAccountNumber(0)
 {
-    // NYI: Clean up account list
 }
 
 // Get acount number. Only return valid object if password is correct
-Account* Bank::getAccount(int num, std::string password)
+Account* Bank::getAccount(std::int32_t num, std::string password)
 {
     Account* userAccount = nullptr;
-    if (myAccounts.size() > num)
+    if (num >= 0)
     {
-        userAccount = (Account*)myAccounts[num];
+        std::size_t index = static_cast<std::size_t>(num);
+        if (myAccounts.size() > index)
+        {
+            userAccount = myAccounts[index].get();
+        }
     }
-    if ((userAccount != nullptr) && (password.compare(userAccount->getPassword()) != 0))
+    if (userAccount != nullptr)
     {
-        // account wrong if account number does not match
-        userAccount = NULL;
+        const char* storedPassword = userAccount->getPassword();
+        if ((storedPassword[0] != '\0') && (password.compare(storedPassword) != 0))
+        {
+            // account wrong if password does not match
+            userAccount = nullptr;
+        }
     }
 
-    // No account with this number/password exists!!!
-    // return nullptr;
+    // No account with this number/password exists.
     return userAccount;
 }
 
 // Create a new account and return a reference to it
 Account* Bank::addAccount()
 {
-    Account* userAccount = new Account();
+    auto userAccount = std::make_unique<Account>();
     userAccount->setAccountNumber(myCurrentAccountNumber++);
-    myAccounts.push_back(userAccount);
-    return userAccount;
+    Account* accountPtr = userAccount.get();
+    myAccounts.push_back(std::move(userAccount));
+    return accountPtr;
 }
 

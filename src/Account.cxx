@@ -5,7 +5,7 @@
 #include <utility>
 
 // C++11/14: move constructor
-Account::Account(Account&& a):
+Account::Account(Account&& a) noexcept:
     myAccountNumber(a.myAccountNumber),
     myBalance(a.myBalance),
     myPassword(std::move(a.myPassword)),
@@ -21,6 +21,11 @@ Account::Account(double initial): myBalance(initial)
 	} else {
 	    myTransactions.emplace_back(UserRequest::REQUEST_WITHDRAW, initial);
 	}
+}
+
+Account::~Account() noexcept
+{
+    myTransactions.clear();
 }
 
 double Account::deposit(double amount)
@@ -39,11 +44,11 @@ double Account::debit(double amount)
     return (getBalance());
 }
 
-int Account::listTransactions(BaseDisplay& display, UserRequest type) {
+std::int32_t Account::listTransactions(BaseDisplay& display, UserRequest type) {
 
-	int transactionsCount = 0;
+	std::int32_t transactionsCount = 0;
 
-	if (display.getType() == BaseDisplay::UNKNOWN) {
+	if (display.getType() == BaseDisplay::UNKNOWN) { // parasoft-suppress MISRACPP2023-0_0_2-a "Display types may vary in derived implementations."
 		display.logError("Unknown display");
 		return transactionsCount;
 	}
@@ -55,15 +60,15 @@ int Account::listTransactions(BaseDisplay& display, UserRequest type) {
 
 
 	// C++11/14: lambda expression
-	std::for_each(
+	static_cast<void>(std::for_each(
 			myTransactions.begin(),
 			myTransactions.end(),
-			[display, &transactionsCount, type](std::tuple<UserRequest, double> tuple) mutable
+			[&display, &transactionsCount, type](std::tuple<UserRequest, double> tuple) mutable
 			{
 				display.showTransaction(std::get<0>(tuple), std::get<1>(tuple));
 				if (std::get<0>(tuple) == type) {
 				    transactionsCount++;
 				}
-			});
+			}));
     return transactionsCount;
 }

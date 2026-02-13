@@ -18,21 +18,19 @@ Use this skill when you need to:
 - Identify gaps in test coverage for specific functions or files
 - Track coverage improvements over time
 
-## Quick Start (Phase 1 - Recommended)
+## Quick Start
 
-Use the automated helper for structured output:
+Run the coverage helper directly:
 
 ```bash
-./.github/skills/cpptest-coverage-analysis/run-coverage-phase1.sh /path/to/project
+./.github/skills/cpptest-coverage-analysis/run-coverage.sh
 ```
 
-**Output includes:**
-- ✅ Structured JSON with coverage percentage
-- ✅ Execution ID for tracking
-- ✅ Paths to all generated reports
-- ✅ Audit trail with user and git branch
+To emit structured JSON metadata for automation/CI, enable `OUTPUT_JSON`:
 
-This outputs Phase 1 metadata while running the full analysis. Perfect for CI/CD pipelines and automation.
+```bash
+OUTPUT_JSON=1 ./.github/skills/cpptest-coverage-analysis/run-coverage.sh
+```
 
 ## Prerequisites
 
@@ -213,6 +211,36 @@ make cpptestcov-compute cpptestcov-report
 - **Coverage maps**: `/home/gtrofimov/parasoft/git/atm_cpp14/build/cpptest-coverage/`
 - **Console report**: Displayed when running `make cpptestcov-report`
 - **XML metrics**: Generated in build directory
+- **Filtered report** (optional): `build/coverage_report.filtered.txt`
+- **Delta summary** (optional): `build/coverage_delta_summary.txt` or `reports/coverage_delta_summary.txt`
+
+## Coverage script options
+
+You can enable optional behavior by setting environment variables before running
+`run-coverage.sh`:
+
+- `CLEAN_COVERAGE=1` to delete stale `.clog` and `.coverage` data before rebuild.
+- `AUTO_REBUILD_ON_MISMATCH=1` to retry a clean rebuild if coverage compute fails.
+- `WRITE_DELTA_SUMMARY=1` to write an LC/MCDC by-file summary next to the HTML report.
+- `REPORT_FILTER_PATHS=1` to generate a filtered report with only `src/` and `include/`.
+- `REPORT_FILTER_REGEX="/src/|/include/"` to customize the filter path regex.
+- `OUTPUT_JSON=1` to write a structured JSON summary.
+- `JSON_OUTPUT_PATH=/path/to/file.json` to customize the JSON output path.
+- `JSON_OUTPUT_STDOUT=1` to also print the JSON to stdout.
+
+## Viewing coverage in VS Code
+
+If you have the Parasoft C/C++test VS Code extension installed, you can view
+coverage highlights directly in the editor once the `.coverage` folder contains
+`coverage.index` and `.cov` files.
+
+1. Open the project in VS Code.
+2. Open the Command Palette and run `C/C++test: Show Coverage...`.
+3. Select a coverage type (e.g., Line Coverage).
+4. Open a source file such as `src/Account.cxx` and review highlights.
+
+If your coverage data lives outside the workspace, set the folder in
+`Extensions > C/C++test > Coverage Data Folder` and re-run `Show Coverage...`.
 
 ## Tips for improving coverage
 

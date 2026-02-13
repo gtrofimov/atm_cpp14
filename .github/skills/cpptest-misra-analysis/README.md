@@ -76,6 +76,14 @@ reports/
 └── misra_cpp_2023.json      # Analysis metadata
 ```
 
+The helper script also writes:
+
+```
+reports/misra_cpp_2023/summary.json
+```
+
+This file contains severity counts and the top violated rules.
+
 ## Environment Variables
 
 - `CPPTEST_STD`: Path to C++test Standard installation (default: `/home/gtrofimov/parasoft/2025.2/std/cpptest`)
@@ -122,6 +130,10 @@ $CPPTEST_STD/cpptestcli \
 - Verify include paths and source file patterns are correct
 - Check that files exist: `ls -la src/*.cxx include/`
 
+**Missing compile_commands.json**
+- The helper script will regenerate it using CMake if it is missing
+- Ensure CMake is available and the project configures successfully
+
 ## Advanced: Report Analysis via Copilot Chat
 
 Ask Copilot to analyze your MISRA report using the built-in C++test MCP integration:
@@ -159,3 +171,16 @@ C++test's MCP Server enables:
 - [MISRA C++ 2023](https://www.misra.org.uk/)
 - [Parasoft C++test Documentation](https://docs.parasoft.com/display/CPP)
 - [C++test Standard User Guide](https://docs.parasoft.com/display/CPP/C%2B%2Btest+Standard)
+
+## VS Code extension tools
+
+With the Parasoft C/C++test VS Code extension configured, Copilot Chat (Agent
+mode) can use built-in tools to drive analysis directly from the IDE:
+
+- `run_static_analysis` to run analysis using the selected test configuration.
+- `get_violations_from_ide` to query currently loaded violations.
+
+Example prompts:
+
+- "Analyze src/ATM.cxx with C/C++test and summarize MISRA issues."
+- "Show severity-1 violations from the IDE results."

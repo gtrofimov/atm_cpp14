@@ -44,7 +44,7 @@ Coverage Summary: ...
 
 ### Now (Phase 1)
 ```bash
-$ ./.github/skills/cpptest-coverage-analysis/run-coverage-phase1.sh .
+$ OUTPUT_JSON=1 ./.github/skills/cpptest-coverage-analysis/run-coverage.sh
 [...original output...]
 
 {
@@ -95,7 +95,7 @@ rm -rf .github/skills/phase1-demo/
 ### Test Coverage (if CPPTEST available)
 ```bash
 # Run coverage with Phase 1 structured output
-./.github/skills/cpptest-coverage-analysis/run-coverage-phase1.sh . 2>/dev/null | jq '.outputs'
+OUTPUT_JSON=1 ./.github/skills/cpptest-coverage-analysis/run-coverage.sh 2>/dev/null | jq '.outputs'
 ```
 
 ---
@@ -111,7 +111,7 @@ IMPROVED (Now outputs Phase 1 data):
 
   .github/skills/cpptest-coverage-analysis/
     ├── SKILL.md                          ← Updated (mentions Phase 1)
-    ├── run-coverage-phase1.sh            ← NEW (Phase 1 wrapper)
+    ├── run-coverage.sh                   ← Updated (optional Phase 1 JSON)
     └── .DECISIONS.md                     ← NEW (design log)
 
 REFERENCE (For guidance):
@@ -160,7 +160,7 @@ echo "$output" | jq '.' > .github/logs/skill-execution-$exec_id.json
 
 **To adopt Phase 1 now:**
 1. Use `create-skill-v2.sh` when creating new skills
-2. Use `run-coverage-phase1.sh` in CI/CD pipelines
+2. Use `OUTPUT_JSON=1 run-coverage.sh` in CI/CD pipelines
 3. Reference decision logs in `.DECISIONS.md` files
 
 **To understand more:**

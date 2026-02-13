@@ -66,6 +66,14 @@ cmake --build build
 
 This creates `build/compile_commands.json` containing all compiler invocations.
 
+If `compile_commands.json` is missing, the helper script will regenerate it
+automatically using:
+
+```bash
+cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake --build build
+```
+
 ### Step 2: Verify CPPTEST_STD and detect compiler
 
 ```bash
@@ -118,6 +126,9 @@ open reports/report.html      # macOS
 
 # Analyze XML with Copilot Chat
 # Ask: "Parse violations from reports/report.xml and show critical issues"
+
+The helper script also writes a machine-readable summary to:
+`reports/misra_cpp_2023/summary.json` with severity counts and top rules.
 ```
 
 ### Automated approach: Use the provided script
@@ -339,6 +350,23 @@ violations = [
 - **Real-time**: Ask questions about violations in chat
 - **Filtered Queries**: Filter by rule, severity, or file
 - **Context-Aware**: Get explanations and fix suggestions
+
+## VS Code extension tools (Agent mode)
+
+If the Parasoft C/C++test VS Code extension is installed and configured, you can
+use its built-in tools in Copilot Chat (Agent mode) for fast analysis without
+shell commands:
+
+- `run_static_analysis` to analyze a file or project using the currently
+  selected test configuration.
+- `get_violations_from_ide` to retrieve violations already loaded in VS Code,
+  optionally filtered by file, severity, or rule.
+
+Example prompts:
+
+- "Analyze the active file with C/C++test and summarize MISRA C++ 2023 issues."
+- "List severity-1 violations in the IDE for src/Account.cxx."
+- "Run static analysis on the project and show top 5 rules with most violations."
 
 ## MCP Server Integration (GitHub Copilot & AI Agents)
 

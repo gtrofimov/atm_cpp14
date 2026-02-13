@@ -53,6 +53,16 @@
       "what_happens": "Copilot uses C++test MCP to extract violations and categorize by critical/major/minor"
     },
     {
+      "task": "Run analysis from IDE",
+      "query": "Analyze the active file with C/C++test and summarize MISRA C++ 2023 issues",
+      "what_happens": "Copilot uses the VS Code extension tool run_static_analysis and summarizes violations"
+    },
+    {
+      "task": "List IDE violations",
+      "query": "Show severity-1 violations from the IDE results",
+      "what_happens": "Copilot uses get_violations_from_ide to filter the current problems by severity"
+    },
+    {
       "task": "Find top violations",
       "query": "What are the 10 most frequent MISRA violations in reports/report.xml?",
       "what_happens": "MCP parses report and identifies patterns of recurring violations"

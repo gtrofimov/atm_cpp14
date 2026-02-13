@@ -51,14 +51,33 @@ check_prerequisites() {
         exit 1
     fi
     
-    if [ ! -f "$PROJECT_ROOT/$COMPILE_DB" ]; then
-        print_error "Compilation database not found: $COMPILE_DB"
-        print_error "Please run: cmake -B build && cmake --build build"
+    print_success "C++test Standard installation found"
+}
+
+ensure_compile_db() {
+    local compile_db_path="$COMPILE_DB"
+    if [[ "$COMPILE_DB" != /* ]]; then
+        compile_db_path="$PROJECT_ROOT/$COMPILE_DB"
+    fi
+    local compile_db_dir
+    compile_db_dir=$(dirname "$compile_db_path")
+
+    if [ -f "$compile_db_path" ]; then
+        print_success "Compilation database found at $COMPILE_DB"
+        return
+    fi
+
+    print_step "Compilation database not found. Regenerating..."
+    cd "$PROJECT_ROOT"
+    cmake -B "$compile_db_dir" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+    cmake --build "$compile_db_dir"
+
+    if [ ! -f "$compile_db_path" ]; then
+        print_error "Compilation database still missing after regeneration: $COMPILE_DB"
         exit 1
     fi
-    
-    print_success "C++test Standard installation found"
-    print_success "Compilation database found at $COMPILE_DB"
+
+    print_success "Compilation database generated at $COMPILE_DB"
 }
 
 detect_compiler() {
@@ -110,28 +129,98 @@ run_analysis() {
 
 extract_summary() {
     print_step "Extracting analysis summary..."
-    
-    if [ ! -f "$OUTPUT_DIR/report.xml" ]; then
-        print_error "Report not found: $OUTPUT_DIR/report.xml"
+
+    local report_dir="$OUTPUT_DIR/misra_cpp_2023"
+    local report_xml="$report_dir/report.xml"
+    if [ ! -f "$report_xml" ] && [ -f "$OUTPUT_DIR/report.xml" ]; then
+        report_dir="$OUTPUT_DIR"
+        report_xml="$OUTPUT_DIR/report.xml"
+    fi
+
+    if [ ! -f "$report_xml" ]; then
+        print_error "Report not found: $report_xml"
         return
     fi
-    
+
     # Extract violation count and stats from XML
-    TOTAL_VIOLATIONS=$(grep -o 'violations="[0-9]*"' "$OUTPUT_DIR/report.xml" 2>/dev/null | head -1 | grep -o '[0-9]*' || echo "0")
+    TOTAL_VIOLATIONS=$(grep -o 'violations="[0-9]*"' "$report_xml" 2>/dev/null | head -1 | grep -o '[0-9]*' || echo "0")
     
     echo ""
     echo -e "${YELLOW}Analysis Summary:${NC}"
     echo "  Total Violations: $TOTAL_VIOLATIONS"
     echo ""
     echo -e "${YELLOW}Generated Reports:${NC}"
-    echo "  HTML:  $OUTPUT_DIR/report.html"
-    echo "  XML:   $OUTPUT_DIR/report.xml"
+    echo "  HTML:  $report_dir/report.html"
+    echo "  XML:   $report_dir/report.xml"
     echo ""
     echo -e "${YELLOW}Top Violations by Rule:${NC}"
-    grep -o "MISRACPP2023-[^:]*" "$OUTPUT_DIR/report.xml" 2>/dev/null | sed 's/-.*$//' | sort | uniq -c | sort -rn | head -5 | awk '{print "  "$2": "$1" occurrence(s)"}' || echo "  No violations found"
+    grep -o "MISRACPP2023-[^:]*" "$report_xml" 2>/dev/null | sed 's/-.*$//' | sort | uniq -c | sort -rn | head -5 | awk '{print "  "$2": "$1" occurrence(s)"}' || echo "  No violations found"
     echo ""
     echo -e "${BLUE}Use GitHub Copilot to analyze violations:${NC}"
-    echo "  Ask: 'Parse violations from $OUTPUT_DIR/report.xml and show critical issues'"
+    echo "  Ask: 'Parse violations from $report_dir/report.xml and show critical issues'"
+
+    write_summary_json "$report_xml" "$report_dir"
+}
+
+write_summary_json() {
+    local report_xml="$1"
+    local report_dir="$2"
+    local summary_path="$report_dir/summary.json"
+
+    local sev1=0
+    local sev2=0
+    local sev3=0
+    local sev4=0
+    local sev5=0
+
+    local sev_counts
+    sev_counts=$(grep -E '<(Std|Flow|Func|Dup|Exec)Viol' "$report_xml" 2>/dev/null | grep -o 'sev="[0-9]"' | awk -F'"' '{print $2}' | sort | uniq -c || true)
+
+    while read -r count sev; do
+        case "$sev" in
+            1) sev1=$count ;;
+            2) sev2=$count ;;
+            3) sev3=$count ;;
+            4) sev4=$count ;;
+            5) sev5=$count ;;
+        esac
+    done <<< "$sev_counts"
+
+    local top_rules
+    top_rules=$(grep -E '<(Std|Flow|Func|Dup|Exec)Viol' "$report_xml" 2>/dev/null | grep -o 'rule="[^"]*"' | awk -F'"' '{print $2}' | sort | uniq -c | sort -rn | head -5)
+
+    {
+        echo "{" 
+        echo "  \"report_xml\": \"$report_xml\"," 
+        echo "  \"generated_at\": \"$(date -Iseconds)\"," 
+        echo "  \"severity_counts\": {"
+        echo "    \"1\": $sev1,"
+        echo "    \"2\": $sev2,"
+        echo "    \"3\": $sev3,"
+        echo "    \"4\": $sev4,"
+        echo "    \"5\": $sev5"
+        echo "  },"
+        echo "  \"top_rules\": ["
+
+        local first=1
+        if [ -n "$top_rules" ]; then
+            while read -r count rule; do
+                if [ -z "$rule" ]; then
+                    continue
+                fi
+                if [ $first -eq 0 ]; then
+                    echo ","
+                fi
+                first=0
+                printf "    {\"rule\": \"%s\", \"count\": %s}" "$rule" "$count"
+            done <<< "$top_rules"
+            echo ""
+        fi
+
+        echo "  ]"
+        echo "}"
+    } > "$summary_path"
+    print_success "Summary written: $summary_path"
 }
 
 main() {
@@ -147,6 +236,7 @@ main() {
     echo ""
     
     check_prerequisites
+    ensure_compile_db
     detect_compiler
     prepare_output
     run_analysis

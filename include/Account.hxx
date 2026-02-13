@@ -2,15 +2,16 @@
 #define ACCOUNT_HXX
 
 #include <algorithm>
+#include <cstdint>
+#include <functional>
 #include <string>
 #include <tuple>
-#include <vector>
-#include <functional>
 #include <utility>
-//added comment
+#include <vector>
+
 #include "ATM.hxx"
 
-class Account
+class Account // parasoft-suppress MISRACPP2023-6_0_3-a "Project API types are intentionally in the global namespace."
 {
     public:
     
@@ -18,7 +19,9 @@ class Account
         Account() = default;
 
         // C++11/14: move constructor
-        Account(Account&&);
+        Account(Account&&) noexcept;
+
+        ~Account() noexcept;
 
         explicit Account(double initial);
 
@@ -30,12 +33,12 @@ class Account
         }
 
         // C++14: auto return type
-        auto getAccountNumber() const
+        auto getAccountNumber() const -> std::int32_t
         {
             return (myAccountNumber);
         }
 
-        void setAccountNumber(int num)
+        void setAccountNumber(std::int32_t num)
         {
             myAccountNumber = num;
         }
@@ -57,18 +60,17 @@ class Account
         template <typename T>
         void forEachTransaction(T t)
         {
-            std::for_each(myTransactions.begin(), myTransactions.end(), t);
+            static_cast<void>(std::for_each(myTransactions.begin(), myTransactions.end(), t));
         }
 
-
-        int listTransactions(BaseDisplay&, UserRequest type);
+        std::int32_t listTransactions(BaseDisplay&, UserRequest type);
     private:
 
         // C++11/14: deleted special functions:
         Account(const Account&) = delete;
         Account& operator=(const Account&) = delete;
 
-        int myAccountNumber = 0;
+        std::int32_t myAccountNumber = 0;
         double myBalance = 0;
         std::string myPassword;
 

@@ -132,3 +132,29 @@ export CPPTEST_HOME=/home/gtrofimov/parasoft/2025.2/ct/cpptest-ct
 - See SKILL.md for detailed step-by-step instructions
 - Run `cpptestcov -help` for advanced options
 - Check project README.md for general setup instructions
+
+## VS Code coverage highlights
+
+If you use the Parasoft C/C++test VS Code extension, you can enable in-editor
+coverage highlights after running the coverage workflow:
+
+1. Ensure `.coverage/coverage.index` and `.cov` files exist.
+2. Run `C/C++test: Show Coverage...` from the Command Palette.
+3. Pick a coverage type (e.g., Line Coverage) and open a source file.
+
+If coverage data is stored elsewhere, configure `Extensions > C/C++test >
+Coverage Data Folder` to point to that location.
+
+## Coverage script options
+
+You can enable additional behavior by setting environment variables before
+running `run-coverage.sh`:
+
+- `CLEAN_COVERAGE=1` removes stale `.clog` and `.coverage` data before rebuild.
+- `AUTO_REBUILD_ON_MISMATCH=1` retries a clean rebuild if compute fails.
+- `WRITE_DELTA_SUMMARY=1` writes a short LC/MCDC by-file summary.
+- `REPORT_FILTER_PATHS=1` generates a filtered report for `src/` and `include/`.
+- `REPORT_FILTER_REGEX="/src/|/include/"` customizes the filter pattern.
+- `OUTPUT_JSON=1` writes a structured JSON summary.
+- `JSON_OUTPUT_PATH=/path/to/file.json` customizes the JSON output path.
+- `JSON_OUTPUT_STDOUT=1` also prints the JSON to stdout.

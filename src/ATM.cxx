@@ -2,17 +2,17 @@
 #include "Account.hxx"
 #include "BaseDisplay.hxx"
 
-using std::string;
-
 ATM::ATM(Bank* bank, BaseDisplay* display)
+    : myCurrentAccount(nullptr),
+      myBank(bank),
+      myDisplay(display)
 {
-    myBank = bank;
-    myDisplay = display;
 }
   
-void ATM::viewAccount(int accountNumber, string password)
+void ATM::viewAccount(std::int32_t accountNumber, std::string password)
 {
-    if ( !(myCurrentAccount = myBank->getAccount(accountNumber, password)) )
+    myCurrentAccount = myBank->getAccount(accountNumber, password);
+    if (myCurrentAccount == nullptr)
     {
         myDisplay->showInfoToUser("Invalid account");
     }
@@ -20,18 +20,26 @@ void ATM::viewAccount(int accountNumber, string password)
 
 void ATM::fillUserRequest(UserRequest request, double amount)
 {
-    if (myCurrentAccount)
+    if (myCurrentAccount != nullptr)
+    {
         switch (request)
         {
             case UserRequest::REQUEST_BALANCE:
-                showBalance(); break;
+                showBalance();
+                break;
             case UserRequest::REQUEST_DEPOSIT:
-                makeDeposit(amount); break;
+                makeDeposit(amount);
+                break;
             case UserRequest::REQUEST_WITHDRAW:
-                withdraw(amount); break;
+                withdraw(amount);
+                break;
             case UserRequest::REQUEST_TRANSACTIONS:
                 showTransations();
+                break;
+            default:
+                break;
         }
+    }
 }
 
 void ATM::showBalance()
