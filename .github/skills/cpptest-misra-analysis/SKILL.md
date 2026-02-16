@@ -97,9 +97,9 @@ For general troubleshooting, see [Common Patterns: Troubleshooting](../COMMON_PA
 - Check the specified `-report` directory path
 - Verify directory permissions are writable
 
-## Advanced Report Analysis with C++test MCP
+## Advanced Report Analysis with C++test MCP (Required)
 
-C++test's MCP (Model Context Protocol) Server extension provides direct access to violation parsing without additional scripts.
+C++test's MCP (Model Context Protocol) Server extension provides direct access to violation parsing without additional scripts. This skill must always use the MCP tool to parse C/C++test SA reports.
 
 ### Using Copilot Chat for Report Analysis
 
@@ -120,6 +120,13 @@ Copilot will automatically:
 - Extract and categorize all violations
 - Provide severity-based prioritization
 - Suggest remediation strategies
+
+### Required tool usage
+
+When parsing a C/C++test SA report, always use the MCP tool:
+- `mcp_cpptest-sa_get_violations_from_report_file`
+
+If the MCP tool is unavailable or fails, ask the user whether using Python to parse the report is acceptable. Do not fall back to Python without explicit user approval.
 
 ### Programmatic Report Access
 

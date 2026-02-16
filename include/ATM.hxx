@@ -25,6 +25,8 @@ class ATM
         ATM(Bank* bank, BaseDisplay* display);
         void viewAccount(int accountNumber, std::string password);
         void fillUserRequest(UserRequest request, double amount);
+        void resetSession();
+        bool isAccountActive() const;
 
     private:
 
