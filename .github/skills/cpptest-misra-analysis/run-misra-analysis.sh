@@ -13,6 +13,11 @@ COMPILE_DB="${COMPILE_DB:-build/compile_commands.json}"
 TEST_CONFIG="${TEST_CONFIG:-builtin://MISRA C++ 2023}"
 SUMMARY_DIR="${SUMMARY_DIR:-$PROJECT_ROOT/reports/summary}"
 SUMMARY_STDOUT="${SUMMARY_STDOUT:-1}"
+SCONTROL_MODE="${SCONTROL_MODE:-}"
+SCONTROL_REF_BRANCH="${SCONTROL_REF_BRANCH:-origin/main}"
+SCONTROL_GIT_WORKSPACE="${SCONTROL_GIT_WORKSPACE:-$PROJECT_ROOT}"
+SCONTROL_GIT_URL="${SCONTROL_GIT_URL:-}"
+SCONTROL_GIT_EXEC="${SCONTROL_GIT_EXEC:-git}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -38,6 +43,60 @@ print_success() {
 
 print_error() {
     echo -e "${RED}[✗] $1${NC}"
+}
+
+print_usage() {
+    cat <<EOF
+Usage: $0 [options]
+
+Options:
+  --modified, --branch        Run analysis on files modified vs ref branch
+  --local                     Run analysis on locally modified files
+  --ref-branch <name>          Reference branch for branch diff (default: origin/main)
+  --git-workspace <path>       Git workspace path (default: PROJECT_ROOT)
+  --git-url <url>              Git remote URL (optional)
+  --git-exec <path>            Git executable path (default: git)
+  -h, --help                   Show this help
+EOF
+}
+
+parse_args() {
+    while [ "$#" -gt 0 ]; do
+        case "$1" in
+            --modified|--branch)
+                SCONTROL_MODE=branch
+                ;;
+            --local)
+                SCONTROL_MODE=local
+                ;;
+            --ref-branch)
+                SCONTROL_REF_BRANCH="$2"
+                shift
+                ;;
+            --git-workspace)
+                SCONTROL_GIT_WORKSPACE="$2"
+                shift
+                ;;
+            --git-url)
+                SCONTROL_GIT_URL="$2"
+                shift
+                ;;
+            --git-exec)
+                SCONTROL_GIT_EXEC="$2"
+                shift
+                ;;
+            -h|--help)
+                print_usage
+                exit 0
+                ;;
+            *)
+                print_error "Unknown option: $1"
+                print_usage
+                exit 1
+                ;;
+        esac
+        shift
+    done
 }
 
 check_prerequisites() {
@@ -100,11 +159,30 @@ detect_compiler() {
 run_analysis() {
     mkdir -p "$OUTPUT_DIR"
     print_step "Running MISRA C++ 2023 analysis..."
-    
+
     cd "$PROJECT_ROOT"
-    $CPPTEST_STD/cpptestcli -config "$TEST_CONFIG" -compiler "$COMPILER" -module . \
-        -exclude '**/googletest/**' -exclude '**/googlemock/**' -exclude '**/tests/**' \
-        -input "$COMPILE_DB" -report "$OUTPUT_DIR/misra_cpp_2023" 2>&1 | tee misra_analysis.log
+
+    local cpptest_cmd
+    cpptest_cmd=("$CPPTEST_STD/cpptestcli" -config "$TEST_CONFIG" -compiler "$COMPILER" -module .)
+    cpptest_cmd+=(-exclude '**/googletest/**' -exclude '**/googlemock/**' -exclude '**/tests/**')
+
+    if [ "$SCONTROL_MODE" = "branch" ] || [ "$SCONTROL_MODE" = "local" ]; then
+        cpptest_cmd+=(-property scope.scontrol=true)
+        cpptest_cmd+=(-property scope.scontrol.files.filter.mode="$SCONTROL_MODE")
+        cpptest_cmd+=(-property scontrol.rep1.type=git)
+        cpptest_cmd+=(-property scontrol.rep1.git.workspace="$SCONTROL_GIT_WORKSPACE")
+        cpptest_cmd+=(-property scontrol.git.exec="$SCONTROL_GIT_EXEC")
+        if [ -n "$SCONTROL_GIT_URL" ]; then
+            cpptest_cmd+=(-property scontrol.rep1.git.url="$SCONTROL_GIT_URL")
+        fi
+        if [ "$SCONTROL_MODE" = "branch" ]; then
+            cpptest_cmd+=(-property scope.scontrol.ref.branch="$SCONTROL_REF_BRANCH")
+            cpptest_cmd+=(-exclude 'build/_deps/**')
+        fi
+    fi
+
+    cpptest_cmd+=(-input "$COMPILE_DB" -report "$OUTPUT_DIR/misra_cpp_2023")
+    "${cpptest_cmd[@]}" 2>&1 | tee misra_analysis.log
     print_success "Analysis completed"
 }
 
@@ -228,6 +306,7 @@ write_summary_json() {
 }
 
 main() {
+    parse_args "$@"
     print_header "C++test MISRA C++ 2023 Static Analysis"
     echo ""
     echo "Configuration:"

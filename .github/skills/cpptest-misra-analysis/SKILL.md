@@ -41,6 +41,54 @@ $CPPTEST_STD/cpptestcli -config "builtin://MISRA C++ 2023" -compiler gcc_13-64 \
   -input build/compile_commands.json -report reports/misra_cpp_2023
 ```
 
+### 2a. Run MISRA analysis on files modified vs a reference branch
+
+Use Git SCM properties so C++test can compute the branch diff scope.
+
+```bash
+$CPPTEST_STD/cpptestcli -config "builtin://MISRA C++ 2023" -compiler gcc_13-64 \
+  -module . -exclude '**/googletest/**' -exclude '**/tests/**' -exclude 'build/_deps/**' \
+  -input build/compile_commands.json \
+  -property scope.scontrol=true \
+  -property scope.scontrol.files.filter.mode=branch \
+  -property scope.scontrol.ref.branch=origin/main \
+  -property scontrol.rep1.type=git \
+  -property scontrol.rep1.git.workspace=/path/to/repo \
+  -property scontrol.rep1.git.url=https://example.com/org/repo.git \
+  -property scontrol.git.exec=/usr/bin/git \
+  -report reports/misra_cpp_2023_branch
+```
+
+You can also use the helper script with environment variables:
+
+```bash
+SCONTROL_MODE=branch \
+SCONTROL_REF_BRANCH=origin/main \
+SCONTROL_GIT_WORKSPACE=/path/to/repo \
+SCONTROL_GIT_URL=https://example.com/org/repo.git \
+SCONTROL_GIT_EXEC=/usr/bin/git \
+./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh
+```
+
+Or use the helper script flags:
+
+```bash
+./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh --modified \
+  --ref-branch origin/main \
+  --git-workspace /path/to/repo \
+  --git-url https://example.com/org/repo.git \
+  --git-exec /usr/bin/git
+```
+
+```bash
+./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh --local \
+  --git-workspace /path/to/repo
+```
+
+Notes:
+- `scope.scontrol.files.filter.mode=branch` compares the current branch to `scope.scontrol.ref.branch`.
+- Git SCM properties are required; otherwise branch scope resolves to zero files.
+
 Or use the helper script:
 
 ```bash
@@ -54,6 +102,16 @@ Or use the helper script:
 - **JSON Summary**: `reports/misra_cpp_2023/summary.json`
 
 ## Key considerations
+
+### Scope selection from plain language (Default: full scan)
+
+When the user asks to run MISRA analysis, infer the desired scope:
+
+- If the user says "full", "entire project", "all files", or does not specify scope, run the full scan.
+- If the user says "modified files", "changed files", "only diff", or references a branch comparison, run branch-diff scope.
+- If the user says "local changes" or "working tree", run local scope.
+
+For branch-diff or local scope, ensure Git SCM properties are provided (see section 2a). If not available, ask for the repo workspace path, git executable path, and (for branch scope) reference branch; default to `origin/main` when unspecified.
 
 ### Compiler flags
 
