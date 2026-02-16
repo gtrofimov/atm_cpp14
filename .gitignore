@@ -8,6 +8,11 @@ ATM_Cpp14_lib.a
 .vscode
 *.properties
 **/*.properties
+.cpptest
 reports
 Debug
-.cpptest
+.github/skills/**/misra_analysis*.log
+misra_*.log
+MCDC_*.md
+MCDC_*.txt
+misra_analysis.log
