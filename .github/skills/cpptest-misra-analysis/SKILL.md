@@ -93,6 +93,37 @@ Or use the helper script:
 
 ```bash
 ./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh
+
+### 2b. Report only new violations vs a baseline report (default ref branch: origin/main)
+
+Use a baseline report.xml to mark only new findings. When the user asks for
+"only new violations" or "new findings vs <branch>" in natural language,
+default the ref branch to origin/main and set the baseline report with the
+following steps.
+
+1) Extract the baseline report from the ref branch (default path in this repo):
+
+```bash
+mkdir -p reports/baseline_origin_main
+git show origin/main:reports/misra_cpp_2023_baseline/report.xml > \
+  reports/baseline_origin_main/report.xml
+```
+
+2) Run MISRA and exclude existing findings using the baseline:
+
+```bash
+$CPPTEST_STD/cpptestcli -config "builtin://MISRA C++ 2023" -compiler gcc_13-64 \
+  -module . -exclude '**/googletest/**' -exclude '**/tests/**' \
+  -input build/compile_commands.json \
+  -property goal.ref.report.file=reports/baseline_origin_main/report.xml \
+  -property goal.ref.report.findings.exclude=true \
+  -report reports/misra_cpp_2023_new_only
+```
+
+Notes:
+- `goal.ref.report.file` points to the baseline report.xml.
+- `goal.ref.report.findings.exclude=true` limits the report to only new findings.
+- If the baseline path differs, locate it in origin/main and update the `git show` path.
 ```
 
 ### 3. Review reports
@@ -111,7 +142,14 @@ When the user asks to run MISRA analysis, infer the desired scope:
 - If the user says "modified files", "changed files", "only diff", or references a branch comparison, run branch-diff scope.
 - If the user says "local changes" or "working tree", run local scope.
 
+Default behavior is full analysis that reports all violations. Only switch to
+"new violations only" when the user explicitly asks for it.
+
 For branch-diff or local scope, ensure Git SCM properties are provided (see section 2a). If not available, ask for the repo workspace path, git executable path, and (for branch scope) reference branch; default to `origin/main` when unspecified.
+
+For "new violations only" requests, use section 2b. If the user does not
+specify a ref branch, default to `origin/main` and generate the baseline report
+from that branch before running analysis.
 
 ### Compiler flags
 
