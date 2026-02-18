@@ -25,6 +25,7 @@ Run: `./.github/skills/cpptest-coverage-analysis/run-coverage.sh` or `OUTPUT_JSO
 ## Prerequisites
 
 - `CPPTEST_HOME` environment variable set to C/C++test installation
+- If `CPPTEST_CT` is set, treat it as the source of truth for `CPPTEST_HOME`
 - Valid C/C++test license
 - CMake-based C++ project with GoogleTest integration
 
@@ -43,6 +44,8 @@ cmake -DCPPTEST_COVERAGE=ON .. && make clean all -j4
 ```bash
 ./atm_gtest
 ```
+
+GoogleTest sources live in `tests/gt`.
 
 ### 3. Compute coverage metrics
 
@@ -85,7 +88,7 @@ For general troubleshooting (license errors, missing data, build configuration),
 ## Example workflow
 
 ```bash
-export CPPTEST_HOME=/home/gtrofimov/parasoft/2025.2/ct/cpptest-ct
+export CPPTEST_HOME=${CPPTEST_CT:-/home/gtrofimov/parasoft/2025.2/ct/cpptest-ct}
 cd /home/gtrofimov/parasoft/git/atm_cpp14
 rm -rf build && mkdir build && cd build
 cmake -DCPPTEST_COVERAGE=ON .. && make -j4

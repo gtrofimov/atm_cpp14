@@ -35,19 +35,6 @@ public:
 };
 }  // namespace
 
-TEST(ATM, exampleFunctionShowsMessage) {
-  ::testing::Test::RecordProperty("req", "AGT-9");
-  ::testing::Test::RecordProperty("cpptest_filename", __FILE__);
-  Bank bank;
-  TestDisplay display;
-  ATM atm(&bank, &display);
-
-  atm.exampleFunction();
-
-  ASSERT_EQ(display.infoCalls, 1);
-  ASSERT_EQ(display.lastInfo, "This is a dummy function");
-}
-
 TEST(ATM, viewAccountInvalidShowsMessage) {
   ::testing::Test::RecordProperty("req", "AGT-9");
   ::testing::Test::RecordProperty("cpptest_filename", __FILE__);

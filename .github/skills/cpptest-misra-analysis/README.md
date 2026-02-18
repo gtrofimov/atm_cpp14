@@ -118,29 +118,92 @@ For general troubleshooting (missing compiler, include paths, output permissions
 - The helper script will regenerate it using CMake if it is missing
 - Ensure CMake is available and the project configures successfully
 
-## Advanced: Report Analysis via Copilot Chat
+## Advanced: Comprehensive Report Analysis via MCP Tools
 
-Ask Copilot to analyze your MISRA report using the built-in C++test MCP integration:
+The skill now provides integrated MCP tools for powerful violation parsing and remediation:
 
-**In Copilot Chat (VS Code):**
+### Available MCP Tools
+
+| Tool | Purpose | Usage |
+|------|---------|-------|
+| `mcp_cpptest-sa_get_violations_from_report_file` | Extract violations from XML reports with filtering | Parse results, filter by severity/rule/file |
+| `mcp_cpptest-sa_get_rule_documentation` | Get detailed rule explanations and guidelines | Understand why a rule exists, learn best practices |
+| `mcp_cpptest-sa_get_relevant_rules` | Discover rules by natural language query | Find related compliance rules, understand scope |
+| `mcp_cpptest-sa_search_documentation` | Query C++test Standard documentation | Configuration, troubleshooting, advanced topics |
+
+### Ask Copilot in Chat
+
+**Complete analysis with all MCP tools:**
 
 ```
 @GitHub Copilot
-Parse the violations from reports/report.xml and:
-1. Group by severity
-2. Show top 10 most frequent violations
-3. Highlight critical issues
-4. Suggest fixes for high-priority violations
+Perform a comprehensive analysis of reports/misra_cpp_2023_new_only/report.xml:
+1. Extract all violations
+2. For each top rule, get detailed documentation
+3. Explain severity breakdown
+4. Suggest specific code fixes for critical violations
+5. Provide remediation priority roadmap
 ```
+
+**Single-file analysis:**
+
+```
+@GitHub Copilot
+Parse violations from reports/misra_cpp_2023/report.xml for src/ATM.cxx.
+Group by rule and explain each violation with fixes.
+```
+
+**Rule deep-dive:**
+
+```
+@GitHub Copilot
+Get the documentation for MISRACPP2023-7_11_1-a and show how to fix it 
+in src/ATM.cxx line 70. Include before/after code examples.
+```
+
+**Find related issues:**
+
+```
+@GitHub Copilot
+Search the C++test documentation for rules related to pointer casting 
+and null pointer handling.
+```
+
+### Real-World Example
+
+After running analysis:
+
+```bash
+./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh --modified \
+  --ref-branch origin/main
+```
+
+Then in Copilot Chat:
+
+```
+@GitHub Copilot
+The MISRA analysis found 5 new violations. 
+Parse reports/misra_cpp_2023_new_only/report.xml and:
+1. Show each violation with rule ID, file, and line number
+2. Get documentation for each rule
+3. Explain what needs to be fixed
+4. Provide the corrected code for each violation
+```
+
+Copilot will automatically use MCP tools to provide:
+- ✅ Structured violation data
+- ✅ Rule explanations and rationale
+- ✅ Before/after code examples
+- ✅ Severity and priority ordering
 
 ### MCP Capabilities
 
 C++test's MCP Server enables:
-- Direct XML report parsing
-- Violation filtering by rule, severity, or file
-- Rule documentation and explanations
-- Context-aware remediation suggestions
-- No additional tools or dependencies needed
+- **Direct XML Parsing** - No dependencies, native C++test integration
+- **Flexible Filtering** - Query by rule ID, severity level, or source file
+- **Rule Documentation** - Get comprehensive explanations for every violation
+- **Fix Suggestions** - Context-aware remediation guidance
+- **Related Rules Search** - Discover similar compliance requirements
 
 ### Benefits Over Custom Tools
 
@@ -148,7 +211,9 @@ C++test's MCP Server enables:
 ✓ **AI-Powered** - Intelligent recommendations from Copilot
 ✓ **No Dependencies** - No Python or additional tools required
 ✓ **Real-time Queries** - Ask questions in Copilot Chat
+✓ **Immediate Fixes** - Get actionable remediation guidance
 ✓ **Always Updated** - Leverages latest C++test features
+✓ **Complete Coverage** - All four MCP tools work together
 
 ## References
 

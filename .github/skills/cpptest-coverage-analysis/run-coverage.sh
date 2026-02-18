@@ -5,7 +5,7 @@
 set -e
 
 PROJECT_ROOT="/home/gtrofimov/parasoft/git/atm_cpp14"
-CPPTEST_HOME="${CPPTEST_HOME:-/home/gtrofimov/parasoft/2025.2/ct/cpptest-ct}"
+CPPTEST_HOME="${CPPTEST_HOME:-${CPPTEST_CT:-/home/gtrofimov/parasoft/2025.2/ct/cpptest-ct}}"
 BUILD_DIR="${PROJECT_ROOT}/build"
 CLEAN_COVERAGE="${CLEAN_COVERAGE:-0}"
 AUTO_REBUILD_ON_MISMATCH="${AUTO_REBUILD_ON_MISMATCH:-0}"

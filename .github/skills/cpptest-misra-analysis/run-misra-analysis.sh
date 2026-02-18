@@ -1,6 +1,10 @@
 #!/bin/bash
 # C++test MISRA C++ 2023 Analysis Helper Script
 # This script automates running MISRA C++ 2023 static analysis using compilation database
+# 
+# IMPORTANT: This script converts all file paths to absolute paths to ensure
+# C++test's git scope control properly matches the repository. Relative paths
+# (like ".") cause C++test's scope control to fail silently with 0 files in scope.
 
 set -e
 
@@ -18,6 +22,8 @@ SCONTROL_REF_BRANCH="${SCONTROL_REF_BRANCH:-origin/main}"
 SCONTROL_GIT_WORKSPACE="${SCONTROL_GIT_WORKSPACE:-$PROJECT_ROOT}"
 SCONTROL_GIT_URL="${SCONTROL_GIT_URL:-}"
 SCONTROL_GIT_EXEC="${SCONTROL_GIT_EXEC:-git}"
+NEW_VIOLATIONS_ONLY="${NEW_VIOLATIONS_ONLY:-0}"
+BASELINE_REPORT="${BASELINE_REPORT:-}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -49,14 +55,40 @@ print_usage() {
     cat <<EOF
 Usage: $0 [options]
 
-Options:
-  --modified, --branch        Run analysis on files modified vs ref branch
-  --local                     Run analysis on locally modified files
-  --ref-branch <name>          Reference branch for branch diff (default: origin/main)
+Scope Options (default: full scan):
+  --branch, --modified        Analyze only files modified vs ref branch
+  --local                     Analyze only locally modified files (working tree)
+
+Report Options (default: all violations):
+  --new-violations            Show only new violations (exclude baseline findings)
+  --ref-branch <name>         Reference branch for scope & baseline (default: origin/main)
+
+Git Configuration:
   --git-workspace <path>       Git workspace path (default: PROJECT_ROOT)
-  --git-url <url>              Git remote URL (optional)
+  --git-url <url>              Git remote URL (auto-detected if not provided)
   --git-exec <path>            Git executable path (default: git)
+
+Baseline Report:
+  --baseline <path>            Path to baseline report (auto-extracted from ref branch if omitted)
+
+Other:
   -h, --help                   Show this help
+
+Examples:
+  # Full scan
+  $0
+
+  # Modified files only
+  $0 --branch
+
+  # New violations only (full scan)
+  $0 --new-violations
+
+  # Modified files with only new violations
+  $0 --branch --new-violations
+
+  # Against different branch
+  $0 --branch --ref-branch origin/develop --new-violations
 EOF
 }
 
@@ -69,8 +101,15 @@ parse_args() {
             --local)
                 SCONTROL_MODE=local
                 ;;
+            --new-violations)
+                NEW_VIOLATIONS_ONLY=1
+                ;;
             --ref-branch)
                 SCONTROL_REF_BRANCH="$2"
+                shift
+                ;;
+            --baseline)
+                BASELINE_REPORT="$2"
                 shift
                 ;;
             --git-workspace)
@@ -111,6 +150,14 @@ check_prerequisites() {
         print_error "cpptestcli not found in $CPPTEST_STD"
         exit 1
     fi
+    
+    # CRITICAL: Convert PROJECT_ROOT and git workspace to absolute paths
+    # C++test's scope.scontrol property requires absolute paths to properly match
+    # the git repository. Relative paths (like ".") cause git scope control to fail
+    # silently with "0 files checked", filtering out all modified files.
+    # See: https://docs.parasoft.com/display/CPP/Scope+Control
+    PROJECT_ROOT=$(cd "$PROJECT_ROOT" && pwd)
+    SCONTROL_GIT_WORKSPACE=$(cd "$SCONTROL_GIT_WORKSPACE" && pwd)
     
     print_success "C++test Standard installation found"
 }
@@ -154,10 +201,76 @@ detect_compiler() {
     fi
 }
 
+ensure_baseline_report() {
+    if [ "$NEW_VIOLATIONS_ONLY" -ne 1 ]; then
+        return
+    fi
 
+    # If baseline path is provided, verify it exists
+    if [ -n "$BASELINE_REPORT" ]; then
+        if [ ! -f "$BASELINE_REPORT" ]; then
+            print_error "Baseline report not found: $BASELINE_REPORT"
+            exit 1
+        fi
+        print_success "Using baseline report: $BASELINE_REPORT"
+        return
+    fi
 
+    # Auto-generate baseline from ref branch
+    local baseline_dir="$PROJECT_ROOT/reports/baseline_${SCONTROL_REF_BRANCH##*/}"
+    local baseline_file="$baseline_dir/report.xml"
+
+    # Check if auto baseline already exists
+    if [ -f "$baseline_file" ]; then
+        print_success "Using existing baseline: $baseline_file"
+        BASELINE_REPORT="$baseline_file"
+        return
+    fi
+
+    print_step "Extracting baseline report from $SCONTROL_REF_BRANCH..."
+    
+    mkdir -p "$baseline_dir"
+    
+    # Try to extract from standard baseline path first
+    local baseline_path="reports/misra_cpp_2023_baseline/report.xml"
+    if git show "$SCONTROL_REF_BRANCH:$baseline_path" > "$baseline_file" 2>/dev/null; then
+        print_success "Baseline extracted from $SCONTROL_REF_BRANCH:$baseline_path"
+        BASELINE_REPORT="$baseline_file"
+        return
+    fi
+
+    # Fallback: try alternate baseline paths
+    for alt_path in "reports/baseline/report.xml" "reports/misra_report.xml"; do
+        if git show "$SCONTROL_REF_BRANCH:$alt_path" > "$baseline_file" 2>/dev/null; then
+            print_success "Baseline extracted from $SCONTROL_REF_BRANCH:$alt_path"
+            BASELINE_REPORT="$baseline_file"
+            return
+        fi
+    done
+
+    print_error "Could not find baseline report in $SCONTROL_REF_BRANCH"
+    print_step "Tried paths: $baseline_path, reports/baseline/report.xml, reports/misra_report.xml"
+    exit 1
+}
 run_analysis() {
-    mkdir -p "$OUTPUT_DIR"
+    local report_suffix=""
+    
+    # Determine report suffix based on analysis scope
+    if [ "$SCONTROL_MODE" = "branch" ] && [ "$NEW_VIOLATIONS_ONLY" -eq 1 ]; then
+        report_suffix="_branch_new"
+    elif [ "$SCONTROL_MODE" = "branch" ]; then
+        report_suffix="_branch"
+    elif [ "$SCONTROL_MODE" = "local" ] && [ "$NEW_VIOLATIONS_ONLY" -eq 1 ]; then
+        report_suffix="_local_new"
+    elif [ "$SCONTROL_MODE" = "local" ]; then
+        report_suffix="_local"
+    elif [ "$NEW_VIOLATIONS_ONLY" -eq 1 ]; then
+        report_suffix="_new_only"
+    fi
+    
+    local report_dir="$OUTPUT_DIR/misra_cpp_2023${report_suffix}"
+    mkdir -p "$report_dir"
+    
     print_step "Running MISRA C++ 2023 analysis..."
 
     cd "$PROJECT_ROOT"
@@ -166,34 +279,66 @@ run_analysis() {
     cpptest_cmd=("$CPPTEST_STD/cpptestcli" -config "$TEST_CONFIG" -compiler "$COMPILER" -module .)
     cpptest_cmd+=(-exclude '**/googletest/**' -exclude '**/googlemock/**' -exclude '**/tests/**')
 
+    # Add scope control properties for branch or local analysis
     if [ "$SCONTROL_MODE" = "branch" ] || [ "$SCONTROL_MODE" = "local" ]; then
         cpptest_cmd+=(-property scope.scontrol=true)
         cpptest_cmd+=(-property scope.scontrol.files.filter.mode="$SCONTROL_MODE")
         cpptest_cmd+=(-property scontrol.rep1.type=git)
         cpptest_cmd+=(-property scontrol.rep1.git.workspace="$SCONTROL_GIT_WORKSPACE")
         cpptest_cmd+=(-property scontrol.git.exec="$SCONTROL_GIT_EXEC")
+        
+        # Auto-detect git URL if not provided
+        if [ -z "$SCONTROL_GIT_URL" ]; then
+            SCONTROL_GIT_URL=$(cd "$SCONTROL_GIT_WORKSPACE" && git remote get-url origin 2>/dev/null || echo "")
+            if [ -n "$SCONTROL_GIT_URL" ]; then
+                print_step "Auto-detected git URL: $SCONTROL_GIT_URL"
+            fi
+        fi
+        
         if [ -n "$SCONTROL_GIT_URL" ]; then
             cpptest_cmd+=(-property scontrol.rep1.git.url="$SCONTROL_GIT_URL")
         fi
+        
         if [ "$SCONTROL_MODE" = "branch" ]; then
             cpptest_cmd+=(-property scope.scontrol.ref.branch="$SCONTROL_REF_BRANCH")
             cpptest_cmd+=(-exclude 'build/_deps/**')
         fi
     fi
 
-    cpptest_cmd+=(-input "$COMPILE_DB" -report "$OUTPUT_DIR/misra_cpp_2023")
+    # Add baseline report properties for new violations only
+    if [ "$NEW_VIOLATIONS_ONLY" -eq 1 ]; then
+        if [ -z "$BASELINE_REPORT" ]; then
+            print_error "Baseline report required for --new-violations but not found"
+            exit 1
+        fi
+        cpptest_cmd+=(-property goal.ref.report.file="$BASELINE_REPORT")
+        cpptest_cmd+=(-property goal.ref.report.findings.exclude=true)
+        print_step "Showing only new violations (baseline: $BASELINE_REPORT)"
+    fi
+
+    cpptest_cmd+=(-input "$COMPILE_DB" -report "$report_dir")
     "${cpptest_cmd[@]}" 2>&1 | tee misra_analysis.log
+    
+    # Store report dir for summary extraction
+    LAST_REPORT_DIR="$report_dir"
+    
     print_success "Analysis completed"
 }
 
 extract_summary() {
     print_step "Extracting analysis summary..."
 
-    local report_dir="$OUTPUT_DIR/misra_cpp_2023"
+    local report_dir
+    if [ -n "$LAST_REPORT_DIR" ]; then
+        report_dir="$LAST_REPORT_DIR"
+    else
+        report_dir="$OUTPUT_DIR/misra_cpp_2023"
+    fi
+    
     local report_xml="$report_dir/report.xml"
     if [ ! -f "$report_xml" ] && [ -f "$OUTPUT_DIR/report.xml" ]; then
-        report_dir="$OUTPUT_DIR"
         report_xml="$OUTPUT_DIR/report.xml"
+        report_dir="$OUTPUT_DIR"
     fi
 
     if [ ! -f "$report_xml" ]; then
@@ -316,11 +461,22 @@ main() {
     echo "  Test Config: $TEST_CONFIG"
     echo "  Compile DB: $COMPILE_DB"
     echo "  Output: $OUTPUT_DIR"
+    if [ "$SCONTROL_MODE" = "branch" ]; then
+        echo "  Mode: Branch scope (vs $SCONTROL_REF_BRANCH)"
+    elif [ "$SCONTROL_MODE" = "local" ]; then
+        echo "  Mode: Local scope"
+    else
+        echo "  Mode: Full scan"
+    fi
+    if [ "$NEW_VIOLATIONS_ONLY" -eq 1 ]; then
+        echo "  Report: New violations only"
+    fi
     echo ""
     
     check_prerequisites
     ensure_compile_db
     detect_compiler
+    ensure_baseline_report
     run_analysis
     extract_summary
     

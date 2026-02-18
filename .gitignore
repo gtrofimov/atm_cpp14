@@ -16,3 +16,4 @@ misra_*.log
 MCDC_*.md
 MCDC_*.txt
 misra_analysis.log
+REQUIREMENTS_COVERAGE_REPORT.md
