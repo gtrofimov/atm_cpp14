@@ -34,7 +34,7 @@ Run: `./.github/skills/cpptest-coverage-analysis/run-coverage.sh` or `OUTPUT_JSO
 ### 1. Clean rebuild with coverage
 
 ```bash
-cd /home/gtrofimov/parasoft/git/atm_cpp14
+cd $(git rev-parse --show-toplevel)
 rm -rf build && mkdir build && cd build
 cmake -DCPPTEST_COVERAGE=ON .. && make clean all -j4
 ```
@@ -88,8 +88,8 @@ For general troubleshooting (license errors, missing data, build configuration),
 ## Example workflow
 
 ```bash
-export CPPTEST_HOME=${CPPTEST_CT:-/home/gtrofimov/parasoft/2025.2/ct/cpptest-ct}
-cd /home/gtrofimov/parasoft/git/atm_cpp14
+export CPPTEST_HOME=${CPPTEST_CT:-/opt/parasoft/cpptest-ct}
+cd $(git rev-parse --show-toplevel)
 rm -rf build && mkdir build && cd build
 cmake -DCPPTEST_COVERAGE=ON .. && make -j4
 ./atm_gtest
@@ -138,11 +138,13 @@ If your coverage data lives outside the workspace, set the folder in
 
 ## Advanced: Using C/C++test MCP Server
 
+**Required:** When querying coverage data from `.coverage/` directory files, you **MUST** use `cpptest-ct` MCP tools. Do **not** parse coverage files manually with Python, bash, or grep.
+
 The C/C++test-ct Model Context Protocol (MCP) server provides powerful tools for programmatic access to coverage data and tools. These tools can be accessed through connected development tools.
 
 ### Available MCP Tools
 
-The following MCP tools are available for deeper coverage analysis:
+The following MCP tools are **required** for coverage data access:
 
 #### Query Line Coverage
 
@@ -156,9 +158,9 @@ Parameters:
   - coverage_data_dir: Directory with .cov files (typically '.coverage')
 
 Example:
-  source_file: /home/gtrofimov/parasoft/git/atm_cpp14/src/Bank.cxx
+  source_file: /path/to/repo/src/Bank.cxx
   query_type: notcovered
-  coverage_data_dir: /home/gtrofimov/parasoft/git/atm_cpp14/.coverage
+  coverage_data_dir: /path/to/repo/.coverage
 ```
 
 This allows you to:
@@ -205,16 +207,16 @@ Here's how to use MCP tools for comprehensive coverage analysis:
 
 2. Query uncovered lines in ATM.cxx:
    mcp_cpptest-ct_query_line_coverage(
-     source_file: "/home/gtrofimov/parasoft/git/atm_cpp14/src/ATM.cxx",
+     source_file: "/path/to/repo/src/ATM.cxx",
      query_type: "notcovered",
-     coverage_data_dir: "/home/gtrofimov/parasoft/git/atm_cpp14/.coverage"
+     coverage_data_dir: "/path/to/repo/.coverage"
    )
 
 3. Query covered lines in Account.cxx:
    mcp_cpptest-ct_query_line_coverage(
-     source_file: "/home/gtrofimov/parasoft/git/atm_cpp14/src/Account.cxx",
+     source_file: "/path/to/repo/src/Account.cxx",
      query_type: "covered",
-     coverage_data_dir: "/home/gtrofimov/parasoft/git/atm_cpp14/.coverage"
+     coverage_data_dir: "/path/to/repo/.coverage"
    )
 
 4. Search for documentation on improving coverage:
@@ -225,29 +227,6 @@ Here's how to use MCP tools for comprehensive coverage analysis:
 5. Learn how to suppress coverage for legacy code:
    mcp_cpptest-ct_how_to_suppress_coverage()
 ```
-
-### Identifying test gaps with MCP
-
-Using MCP tools, you can systematically identify where to write tests:
-
-1. **Find untested files**:
-   - Query each source file for coverable vs notcovered lines
-   - Prioritize files with 0% coverage
-
-2. **Analyze decision coverage gaps**:
-   - Search documentation for MCDC metrics
-   - Identify branches not taken
-   - Plan test cases for all branch combinations
-
-3. **Target high-value tests**:
-   - Focus on functions called by many other functions
-   - Test error handling paths (exception cases)
-   - Test boundary conditions
-
-4. **Document suppressions**:
-   - Use suppression tool to understand when coverage can be suppressed
-   - Document reasons for suppressions
-   - Review suppressions during code review
 
 ### Integrating MCP into your workflow
 
@@ -264,5 +243,5 @@ Copilot will use the appropriate MCP tools to provide accurate, detailed respons
 
 - C/C++test coverage types: `cpptestcov -help` for detailed options
 - CMake integration: See `cpptest-coverage.cmake` in project root
-- Test suite: `/home/gtrofimov/parasoft/git/atm_cpp14/tests/gt/`
+- Test suite: `tests/gt/`
 - MCP Server: C/C++test-ct MCP protocol server documentation

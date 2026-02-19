@@ -67,12 +67,17 @@ void ATM::withdraw(double amount)
 
 void ATM::resetSession()
 {
-    myCurrentAccount = NULL;
-    myDisplay->showInfoToUser("Session terminated");
+    bool wasActive = isAccountActive();
+    myCurrentAccount = nullptr;
+    if (wasActive) {
+        myDisplay->showInfoToUser("Session terminated");
+    } else {
+        myDisplay->showInfoToUser("No active session to terminate");
+    }
 }
 
 bool ATM::isAccountActive() const
 {
-    return (bool)myCurrentAccount;
+    return (myCurrentAccount != nullptr) && (myCurrentAccount->getBalance() >= 0.0);
 }
 

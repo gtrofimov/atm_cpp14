@@ -62,40 +62,20 @@ $CPPTEST_STD/cpptestcli -config "builtin://MISRA C++ 2023" -compiler gcc_13-64 \
 
 **⚠️ CRITICAL:** Use absolute paths for `-property scontrol.rep1.git.workspace`. Relative paths like `.` cause silent failure with 0 files in scope.
 
-For easier setup, use the helper script instead:
+For easier setup, use the helper script:
 
 ```bash
-SCONTROL_MODE=branch \
-SCONTROL_REF_BRANCH=origin/main \
-SCONTROL_GIT_WORKSPACE=/path/to/repo \
-SCONTROL_GIT_URL=https://example.com/org/repo.git \
-SCONTROL_GIT_EXEC=/usr/bin/git \
-./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh
-```
-
-Or use the helper script flags:
-
-```bash
-./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh --modified \
+./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh --branch \
   --ref-branch origin/main \
   --git-workspace /path/to/repo \
   --git-url https://example.com/org/repo.git \
   --git-exec /usr/bin/git
 ```
 
-```bash
-./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh --local \
-  --git-workspace /path/to/repo
-```
-
 Notes:
 - `scope.scontrol.files.filter.mode=branch` compares the current branch to `scope.scontrol.ref.branch`.
 - Git SCM properties are required; otherwise branch scope resolves to zero files.
-
-Or use the helper script:
-
-```bash
-./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh
+- Git workspace paths are automatically converted to absolute paths by the helper script.
 
 ### 2b. Report only new violations vs a baseline report (default ref branch: origin/main)
 
@@ -127,7 +107,6 @@ Notes:
 - `goal.ref.report.file` points to the baseline report.xml.
 - `goal.ref.report.findings.exclude=true` limits the report to only new findings.
 - If the baseline path differs, locate it in origin/main and update the `git show` path.
-```
 
 ### 3. Review reports
 
@@ -180,17 +159,6 @@ For "new violations only" requests, the script will automatically:
 If you have a custom baseline path, provide it with `--baseline <path>`.
 
 - Report output directories based on analysis scope and filtering
-
-### Compiler flags
-
-- Include all `-I` (include directory) flags needed for compilation
-- Consider using `-Wall -Wextra` for additional warning detection
-- Match the exact compilation environment of your project
-
-### Report location
-
-- HTML report: `<report-path>/report.html` (human-readable)
-- XML report: `<report-path>/report.xml` (programmatic access)
 
 ### Common MISRA C++ 2023 violations
 
@@ -360,30 +328,6 @@ C++test's MCP (Model Context Protocol) Server extension provides direct access t
    - Find configuration guidance and best practices
    - Troubleshoot analysis issues
 
-### Automated Violation Parsing Workflow
-
-After running analysis, use this workflow to parse and analyze results:
-
-```bash
-# 1. Run MISRA analysis (generates reports/misra_cpp_2023/report.xml)
-./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh
-
-# 2. In Copilot Chat, request automated parsing:
-# "Parse violations from reports/misra_cpp_2023/report.xml and provide:
-#  - Violation count by severity
-#  - Top 5 most frequent rules
-#  - Detailed explanations for each rule
-#  - Suggested fixes or suppressions for each violation"
-```
-
-Copilot will automatically:
-- Extract violations using `mcp_cpptest-sa_get_violations_from_report_file`
-- Get rule details via `mcp_cpptest-sa_get_rule_documentation`
-- Categorize by severity
-- Provide code fixes with before/after examples
-- Generate suppression entries in correct `parasoft.suppress` format
-- Recommend which violations to fix vs. suppress based on rule severity and complexity
-
 ### Using Copilot Chat for Report Analysis
 
 In VS Code Copilot Chat, ask for comprehensive analysis:
@@ -452,13 +396,15 @@ Example output includes:
 
 ### Required tool usage
 
-When parsing a C/C++test SA report, always use the MCP tools:
-- `mcp_cpptest-sa_get_violations_from_report_file` for extraction
-- `mcp_cpptest-sa_get_rule_documentation` for rule details
-- `mcp_cpptest-sa_get_relevant_rules` for rule discovery
-- `mcp_cpptest-sa_search_documentation` for configuration help
+**You MUST use MCP tools for all report parsing and fix suggestions. No exceptions.**
 
-Do not fall back to Python or manual parsing without explicit user approval.
+When parsing a C/C++test SA report:
+- **MUST** use `mcp_cpptest-sa_get_violations_from_report_file` — never parse XML manually with Python, bash, or grep
+- **MUST** use `mcp_cpptest-sa_get_rule_documentation` before suggesting any fix — retrieve the official rule explanation first
+- Use `mcp_cpptest-sa_get_relevant_rules` to discover related rules that may also apply
+- Use `mcp_cpptest-sa_search_documentation` for configuration or troubleshooting questions
+
+Do **not** fall back to Python or manual parsing under any circumstances.
 
 ### Structured Violation Data
 
@@ -498,15 +444,12 @@ Get documentation for MISRACPP2023-8_2_2-b and show me how to fix C-style
 casts in src/ATM.cxx line 76.
 ```
 
-### Benefits of MCP-Based Analysis
-
-- **No Dependencies**: No Python or additional tools required
-- **Native Integration**: Direct C++test integration
-- **AI-Powered**: Leverage Copilot for intelligent analysis
-- **Real-time**: Ask questions about violations in chat
-- **Filtered Queries**: Filter by rule, severity, or file
-- **Context-Aware**: Get explanations and fix suggestions
-- **Complete Coverage**: Access all MCP tools for comprehensive analysis
+**Natural language triggers (VS Code / Copilot Chat):**
+- "What does MISRACPP2023-7_11_1-a violation mean and how do I fix it?"
+- "Parse violations from src/ATM.cxx and explain each rule"
+- "Show me the critical violations in our MISRA analysis with suggested fixes"
+- "Find all violations related to pointer casting"
+- "Get documentation on how to configure C++test for stricter analysis"
 
 ## VS Code extension tools (Agent mode)
 
@@ -525,42 +468,6 @@ Example prompts:
 - "List severity-1 violations in the IDE for src/Account.cxx."
 - "Run static analysis on the project and show top 5 rules with most violations."
 
-## MCP Server Integration (GitHub Copilot & AI Agents)
-
-C++test's MCP Server extension enables AI agents to:
-
-1. **Parse Static Analysis Results**: Extract violations from XML reports with filtering
-2. **Interpret Rules**: Query documentation for specific MISRA C++ rules and principles
-3. **Discover Related Rules**: Search for rules related to coding issues
-4. **Propose Fixes**: Generate context-aware remediation suggestions in Copilot Chat
-
-### Complete Analysis Example
-
-```
-@GitHub Copilot
-Perform complete analysis of reports/misra_cpp_2023_new_only/report.xml:
-1. Parse all violations
-2. For each top rule, get detailed documentation
-3. Show severity breakdown
-4. Suggest fixes for all critical violations
-5. Provide a remediation roadmap with priority order
-```
-
-### Using with Copilot in VS Code
-
-Ask Copilot questions like:
-- "What does MISRACPP2023-7_11_1-a violation mean and how do I fix it?"
-- "Parse violations from src/ATM.cxx and explain each rule"
-- "Show me the critical violations in our MISRA analysis with suggested fixes"
-- "Find all violations related to pointer casting"
-- "Get documentation on how to configure C++test for stricter analysis"
-
-Copilot will leverage MCP tools to:
-- Extract violations with structured filtering
-- Provide comprehensive rule explanations
-- Generate code fixes aligned with MISRA standards
-- Suggest configuration improvements
-
 ## Integration with CI/CD
 
 ### GitHub Actions example
@@ -574,10 +481,7 @@ Copilot will leverage MCP tools to:
       -compiler gcc_13-64 \
       -- gcc -Iinclude src/Account.cxx src/Bank.cxx \
       -report reports/misra_cpp_2023
-    
-    # Extract violation count
-    VIOLATIONS=$(grep -o 'violations="[0-9]*"' reports/report.xml | head -1)
-    echo "Static analysis complete: $VIOLATIONS"
+    echo "Static analysis complete"
 ```
 
 ## References
