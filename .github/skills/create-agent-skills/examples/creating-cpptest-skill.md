@@ -12,21 +12,20 @@ A team wants Copilot to help analyze code coverage for C++ projects using C/C++t
 
 ```bash
 cd /path/to/repository
-.github/skills/create-agent-skills/scripts/create-skill-v2.sh \
+.github/skills/create-agent-skills/scripts/create-skill.sh \
   cpptest-coverage-analysis \
   "Analyze code coverage using C/C++test. Use this for running unit tests with coverage instrumentation."
 ```
 
 ### 2. Output
-```json
-{
-  "status": "success",
-  "operation": "create-skill",
-  "outputs": {
-    "primary_artifact": ".github/skills/cpptest-coverage-analysis",
-    "summary": "Created skill 'cpptest-coverage-analysis' with full structure and documentation"
-  }
-}
+```
+Creating skill structure for: cpptest-coverage-analysis
+✓ Created .github/skills/cpptest-coverage-analysis/SKILL.md
+✓ Created scripts directory
+✓ Created templates directory
+✓ Created examples directory
+
+✅ Skill 'cpptest-coverage-analysis' created successfully!
 ```
 
 ### 3. Edit SKILL.md with detailed instructions

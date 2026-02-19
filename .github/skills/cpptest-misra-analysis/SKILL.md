@@ -22,6 +22,7 @@ This skill provides automated MISRA C++ 2023 static analysis using Parasoft C++t
 ## Prerequisites
 
 - `CPPTEST_STD` environment variable set to C++test Standard installation
+- `CPPTEST_HOME` should be set to the same value as `CPPTEST_STD`
 - C++ compiler installed (GCC, Clang, or compatible)
 - CMake 3.11+ (optional, for `compile_commands.json`)
 
@@ -53,46 +54,28 @@ $CPPTEST_STD/cpptestcli -config "builtin://MISRA C++ 2023" -compiler gcc_13-64 \
   -property scope.scontrol.files.filter.mode=branch \
   -property scope.scontrol.ref.branch=origin/main \
   -property scontrol.rep1.type=git \
-  -property scontrol.rep1.git.workspace=/path/to/repo \
-  -property scontrol.rep1.git.url=https://example.com/org/repo.git \
+  -property scontrol.rep1.git.workspace=/home/user/parasoft/git/atm_cpp14 \
+  -property scontrol.rep1.git.url=https://github.com/example/repo.git \
   -property scontrol.git.exec=/usr/bin/git \
   -report reports/misra_cpp_2023_branch
 ```
 
-You can also use the helper script with environment variables:
+**⚠️ CRITICAL:** Use absolute paths for `-property scontrol.rep1.git.workspace`. Relative paths like `.` cause silent failure with 0 files in scope.
+
+For easier setup, use the helper script:
 
 ```bash
-SCONTROL_MODE=branch \
-SCONTROL_REF_BRANCH=origin/main \
-SCONTROL_GIT_WORKSPACE=/path/to/repo \
-SCONTROL_GIT_URL=https://example.com/org/repo.git \
-SCONTROL_GIT_EXEC=/usr/bin/git \
-./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh
-```
-
-Or use the helper script flags:
-
-```bash
-./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh --modified \
+./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh --branch \
   --ref-branch origin/main \
   --git-workspace /path/to/repo \
   --git-url https://example.com/org/repo.git \
   --git-exec /usr/bin/git
 ```
 
-```bash
-./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh --local \
-  --git-workspace /path/to/repo
-```
-
 Notes:
 - `scope.scontrol.files.filter.mode=branch` compares the current branch to `scope.scontrol.ref.branch`.
 - Git SCM properties are required; otherwise branch scope resolves to zero files.
-
-Or use the helper script:
-
-```bash
-./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh
+- Git workspace paths are automatically converted to absolute paths by the helper script.
 
 ### 2b. Report only new violations vs a baseline report (default ref branch: origin/main)
 
@@ -124,7 +107,6 @@ Notes:
 - `goal.ref.report.file` points to the baseline report.xml.
 - `goal.ref.report.findings.exclude=true` limits the report to only new findings.
 - If the baseline path differs, locate it in origin/main and update the `git show` path.
-```
 
 ### 3. Review reports
 
@@ -139,44 +121,140 @@ Notes:
 When the user asks to run MISRA analysis, infer the desired scope:
 
 - If the user says "full", "entire project", "all files", or does not specify scope, run the full scan.
-- If the user says "modified files", "changed files", "only diff", or references a branch comparison, run branch-diff scope.
-- If the user says "local changes" or "working tree", run local scope.
+- If the user says "modified files", "changed files", "only diff", "on branch", or references a branch comparison, run branch-diff scope using `--branch`.
+- If the user says "local changes" or "working tree", run local scope using `--local`.
 
-Default behavior is full analysis that reports all violations. Only switch to
-"new violations only" when the user explicitly asks for it.
+### Violation filtering from plain language (Default: all violations)
 
-For branch-diff or local scope, ensure Git SCM properties are provided (see section 2a). If not available, ask for the repo workspace path, git executable path, and (for branch scope) reference branch; default to `origin/main` when unspecified.
+When the user asks about violations, infer the desired filtering:
 
-For "new violations only" requests, use section 2b. If the user does not
-specify a ref branch, default to `origin/main` and generate the baseline report
-from that branch before running analysis.
+- If the user says "new violations", "new findings", "only new", "vs origin/main", or asks "how many are new", use `--new-violations` to show only violations not in the baseline.
+- Default behavior shows all violations in scope. Only switch to "new violations only" when the user explicitly requests it.
 
-### Compiler flags
+### Combining scope and filtering (Branch + New Violations)
 
-- Include all `-I` (include directory) flags needed for compilation
-- Consider using `-Wall -Wextra` for additional warning detection
-- Match the exact compilation environment of your project
+You can combine scope and filtering in a single run for precise analysis:
 
-### Report location
+**Example scenarios:**
+- "Run MISRA on modified files vs origin/main showing only new violations" → Use `--branch --new-violations`
+- "Check which new violations I introduced on this branch" → Use `--branch --new-violations`
+- "Show me all violations in my branch" → Use `--branch`
+- "What new violations are in my working tree vs origin/main" → Use `--local --new-violations`
 
-- HTML report: `<report-path>/report.html` (human-readable)
-- XML report: `<report-path>/report.xml` (programmatic access)
+### Helper script usage
+
+For branch-diff or local scope, ensure Git SCM properties are provided. If not available, the script will auto-detect the git repository URL. If needed, provide:
+- `--git-workspace` - path to git repository (auto-converted to absolute path)
+- `--git-url` - remote URL (auto-detected if not provided)
+- `--git-exec` - git executable path (defaults to `git`)
+- `--ref-branch` - reference branch (defaults to `origin/main`)
+
+**Important:** Git workspace paths are automatically converted to absolute paths internally. This is required for C++test's scope control to correctly match the git repository. If you provide a relative path, it will be converted automatically.
+
+For "new violations only" requests, the script will automatically:
+1. Extract the baseline report from `--ref-branch` (default: `origin/main`)
+2. Try standard baseline paths: `reports/misra_cpp_2023_baseline/report.xml`
+3. Use `goal.ref.report.file` property to exclude existing findings
+
+If you have a custom baseline path, provide it with `--baseline <path>`.
+
+- Report output directories based on analysis scope and filtering
 
 ### Common MISRA C++ 2023 violations
 
 For a comprehensive table of typical violations and fixes, see [Common Patterns: MISRA Violations](../COMMON_PATTERNS.md#misra-c-2023-common-violations).
 
+### Suppressing violations
+
+When a violation cannot or should not be fixed, you can suppress it using a `parasoft.suppress` file in the source directory.
+
+**Format:** Plain text with `suppression-begin` / `suppression-end` blocks
+
+```plaintext
+# Define suppressions to prevent reporting of selected rule violations
+# Note: One suppression entry can affect more than one violation
+
+suppression-begin
+file: ATM.cxx
+line: 70
+rule-id: MISRACPP2023-7_11_1-b
+message: Do not use the 'NULL' identifier
+reason: Legacy NULL macro usage - pending migration to nullptr
+author: developer
+date: 2026-02-18
+suppression-end
+
+suppression-begin
+file: BaseDisplay.cxx
+rule-id: MISRACPP2023-6_0_3-a
+reason: Global namespace required for C compatibility
+author: developer
+suppression-end
+```
+
+**Suppression fields:**
+- `file:` - Filename relative to source root (required)
+- `line:` - Specific line number (optional, omit to suppress all occurrences in file)
+- `rule-id:` - C++test rule identifier (optional but recommended)
+- `message:` - Expected violation message (optional)
+- `reason:` - Justification for suppression (optional but strongly recommended)
+- `author:` - Person who added the suppression (optional)
+- `date:` - Date suppression was added (optional)
+
+**In-code suppressions:**
+
+You can also suppress violations directly in source code using comments:
+
+```cpp
+// Single line suppression
+// parasoft-suppress MISRACPP2023-7_11_1-b "Approved exception"
+myCurrentAccount = NULL;
+
+// Block suppression
+// parasoft-begin-suppress MISRACPP2023-8_2_8-b "Intentional pointer cast"
+bool isActive = (bool)myCurrentAccount;
+// parasoft-end-suppress MISRACPP2023-8_2_8-b
+```
+
+**Best practices:**
+- Always provide a `reason:` explaining why the violation is acceptable
+- Use specific `line:` numbers when possible to avoid over-suppression
+- Prefer fixing violations over suppressing them when feasible
+- Use in-code suppressions for isolated cases, file suppressions for systematic exceptions
+- Review suppressions during code reviews to ensure they remain valid
+
 ## Examples
 
 ```bash
-# Quick start
-export CPPTEST_STD=/path/to/std/cpptest
+# Full project scan - all violations
 ./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh
 
-# Custom compiler
+# Modified files only - all violations
+./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh --branch
+
+# Full project - new violations only (vs origin/main)
+./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh --new-violations
+
+# Modified files - new violations only (the ultimate check)
+./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh --branch --new-violations
+
+# Against different branch
+./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh --branch --ref-branch origin/develop
+
+# Local working tree changes only
+./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh --local
+
+# Local changes with new violations only
+./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh --local --new-violations
+
+# Custom baseline report
+./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh --branch --new-violations \
+  --baseline /path/to/custom/baseline.xml
+
+# Custom compiler and output
 export COMPILER=clang_17_0-x86_64
 export OUTPUT_DIR=my_reports
-./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh
+./.github/skills/cpptest-misra-analysis/run-misra-analysis.sh --branch --new-violations
 ```
 
 ## Troubleshooting
@@ -185,71 +263,193 @@ For general troubleshooting, see [Common Patterns: Troubleshooting](../COMMON_PA
 
 ### MISRA-specific issues
 
+**Branch scope shows 0 files checked:**
+- This occurs when the git workspace path doesn't match what C++test expects
+- **Solution**: The helper script automatically converts all paths to absolute paths. If you're calling `cpptestcli` directly, ensure:
+  - `-property scontrol.rep1.git.workspace=/absolute/path/to/repo` (not relative paths like `.`)
+  - The workspace path exactly matches the git repository root
+- Verify with: `cd /your/repo && pwd`
+
+Example (❌ wrong - relative path):
+```bash
+-property scontrol.rep1.git.workspace=.
+```
+
+Example (✅ correct - absolute path):
+```bash
+-property scontrol.rep1.git.workspace=/home/user/parasoft/git/atm_cpp14
+```
+
 **Input scope contains no elements:**
 - Ensure you provide the compilation command after `--` or use `-input` with compilation database
 - For database method: verify `-input build/compile_commands.json` is correct path
+- For branch scope: verify workspace path is absolute and matches git root
 
 **Report not in expected location:**
 - Check the specified `-report` directory path
 - Verify directory permissions are writable
 
+**Suppressions not working:**
+- Verify `parasoft.suppress` file is in the same directory as the source file
+- Check suppression format: use `suppression-begin` / `suppression-end` blocks (not XML)
+- Ensure `file:` field uses relative path from source root (e.g., `ATM.cxx` not `src/ATM.cxx`)
+- For in-code suppressions, use `// parasoft-suppress RULE-ID "reason"` format
+- Verify rule ID matches exactly (case-sensitive)
+- Check C++test can find the suppress file with `-suppress` property if needed
+- Example correct format:
+  ```plaintext
+  suppression-begin
+  file: ATM.cxx
+  line: 70
+  rule-id: MISRACPP2023-7_11_1-b
+  reason: Approved by code review
+  suppression-end
+  ```
+
 ## Advanced Report Analysis with C++test MCP (Required)
 
-C++test's MCP (Model Context Protocol) Server extension provides direct access to violation parsing without additional scripts. This skill must always use the MCP tool to parse C/C++test SA reports.
+C++test's MCP (Model Context Protocol) Server extension provides direct access to violation parsing, rule documentation, and fix suggestions. This skill leverages four MCP tools for comprehensive analysis:
+
+### Available MCP Tools
+
+1. **`mcp_cpptest-sa_get_violations_from_report_file`** - Extract violations from XML reports
+   - Filter by rule ID, severity level, or source file
+   - Returns structured violation data for analysis
+
+2. **`mcp_cpptest-sa_get_rule_documentation`** - Get detailed rule explanations
+   - Understand why a rule exists and its implications
+   - Learn standard-compliant coding practices
+
+3. **`mcp_cpptest-sa_get_relevant_rules`** - Search rules by natural language description
+   - Find rules related to specific coding issues
+   - Discover related compliance rules
+
+4. **`mcp_cpptest-sa_search_documentation`** - Query C++test Standard documentation
+   - Find configuration guidance and best practices
+   - Troubleshoot analysis issues
 
 ### Using Copilot Chat for Report Analysis
 
-In VS Code Copilot Chat, you can ask:
+In VS Code Copilot Chat, ask for comprehensive analysis:
 
 ```
 @GitHub Copilot
-I have a MISRA C++ 2023 analysis report at reports/report.xml. 
-Can you:
-1. Parse the violations
-2. Group by severity  
-3. Show top 10 most frequent violations
-4. Suggest fixes for critical issues
+Analyze the MISRA C++ 2023 violations in reports/misra_cpp_2023_new_only/report.xml:
+1. Extract all violations with rule IDs and severity
+2. For each rule, explain what it checks and why
+3. Show the top 3 most critical issues
+4. Provide specific code fixes for each violation
+5. Suggest a remediation priority order
 ```
 
-Copilot will automatically:
-- Access the report via C++test MCP integration
-- Extract and categorize all violations
-- Provide severity-based prioritization
-- Suggest remediation strategies
+Copilot will use MCP tools to:
+- Parse violations from the XML report
+- Retrieve detailed documentation for each rule
+- Explain compliance requirements
+- Suggest code remediation patterns
+
+### Single-Rule Deep Dives
+
+Get detailed guidance on specific violations:
+
+```
+@GitHub Copilot
+Explain the MISRACPP2023-7_11_1-a rule and show me exactly how to fix it 
+in src/ATM.cxx line 70.
+```
+
+Copilot will:
+- Use `mcp_cpptest-sa_get_rule_documentation` to fetch rule details
+- Reference the exact code location
+- Provide compliant code patterns
+- Show before/after examples
+
+### Requesting Fixes and Suppressions
+
+Ask Copilot to suggest both fixes and suppressions for violations:
+
+```
+@GitHub Copilot
+For new violations in modified files, suggest fixes or suppressions. 
+Show parasoft.suppress format for suppressions.
+```
+
+Copilot will:
+- Extract new violations from `reports/misra_cpp_2023_branch_new/report.xml`
+- For each violation, provide:
+  - Rule explanation from documentation
+  - Recommended code fix with before/after comparison
+  - Correct `parasoft.suppress` format if suppression is appropriate
+  - Reasoning for whether to fix or suppress based on severity and complexity
+
+Example output includes:
+- **Fixes** with modernized code (e.g., `NULL` → `nullptr`)
+- **Suppressions** in correct plain text format:
+  ```plaintext
+  suppression-begin
+  file: ATM.cxx
+  line: 70
+  rule-id: MISRACPP2023-7_11_1-b
+  reason: Approved deviation
+  suppression-end
+  ```
 
 ### Required tool usage
 
-When parsing a C/C++test SA report, always use the MCP tool:
-- `mcp_cpptest-sa_get_violations_from_report_file`
+**You MUST use MCP tools for all report parsing and fix suggestions. No exceptions.**
 
-If the MCP tool is unavailable or fails, ask the user whether using Python to parse the report is acceptable. Do not fall back to Python without explicit user approval.
+When parsing a C/C++test SA report:
+- **MUST** use `mcp_cpptest-sa_get_violations_from_report_file` — never parse XML manually with Python, bash, or grep
+- **MUST** use `mcp_cpptest-sa_get_rule_documentation` before suggesting any fix — retrieve the official rule explanation first
+- Use `mcp_cpptest-sa_get_relevant_rules` to discover related rules that may also apply
+- Use `mcp_cpptest-sa_search_documentation` for configuration or troubleshooting questions
 
-### Programmatic Report Access
+Do **not** fall back to Python or manual parsing under any circumstances.
 
-The MCP integration allows AI agents to query violations directly:
+### Structured Violation Data
 
-```python
-# Example: What the MCP tool provides
-violations = [
-  {
-    "rule_id": "MISRACPP2023-6_9_2-a",
-    "message": "Do not use the 'int' standard integer type",
-    "file": "src/Account.cxx",
-    "line": "42",
-    "severity": "4"
-  },
-  ...
-]
+The MCP tools provide violations in structured format for easy analysis:
+
+```json
+{
+  "rule_id": "MISRACPP2023-7_11_1-a",
+  "message": "Prefer 'nullptr' to '0' as the null pointer value",
+  "file": "src/ATM.cxx",
+  "line": "70",
+  "severity": "3",
+  "location": "line 70, column 15"
+}
 ```
 
-### Benefits of MCP-Based Analysis
+### Common Analysis Patterns
 
-- **No Dependencies**: No Python or additional tools required
-- **Native Integration**: Direct C++test integration
-- **AI-Powered**: Leverage Copilot for intelligent analysis
-- **Real-time**: Ask questions about violations in chat
-- **Filtered Queries**: Filter by rule, severity, or file
-- **Context-Aware**: Get explanations and fix suggestions
+**Get all violations by severity:**
+```
+@GitHub Copilot
+Parse reports/misra_cpp_2023_new_only/report.xml and group violations by severity.
+Show count for each severity level.
+```
+
+**Find violations in a specific file:**
+```
+@GitHub Copilot
+Extract violations from reports/misra_cpp_2023/report.xml for src/ATM.cxx only.
+Group by rule and show most frequent issues.
+```
+
+**Get remediation guidance for a rule:**
+```
+@GitHub Copilot
+Get documentation for MISRACPP2023-8_2_2-b and show me how to fix C-style 
+casts in src/ATM.cxx line 76.
+```
+
+**Natural language triggers (VS Code / Copilot Chat):**
+- "What does MISRACPP2023-7_11_1-a violation mean and how do I fix it?"
+- "Parse violations from src/ATM.cxx and explain each rule"
+- "Show me the critical violations in our MISRA analysis with suggested fixes"
+- "Find all violations related to pointer casting"
+- "Get documentation on how to configure C++test for stricter analysis"
 
 ## VS Code extension tools (Agent mode)
 
@@ -268,26 +468,6 @@ Example prompts:
 - "List severity-1 violations in the IDE for src/Account.cxx."
 - "Run static analysis on the project and show top 5 rules with most violations."
 
-## MCP Server Integration (GitHub Copilot & AI Agents)
-
-C++test's MCP Server extension enables AI agents to:
-
-1. **Access Static Analysis Results**: Get violations and categorize by priority
-2. **Interpret Rules**: Ask Copilot about specific MISRA C++ rules and get explanations
-3. **Propose Fixes**: Get context-aware remediation suggestions in Copilot Chat
-
-### Using with Copilot in VS Code
-
-Ask Copilot questions like:
-- "What does MISRACPP2023-6_9_2-a violation mean?"
-- "How do I fix the unused return value violations in Account.cxx?"
-- "Show me the critical violations in our MISRA analysis"
-
-Copilot can then:
-- Query the C++test analysis results via MCP
-- Provide targeted guidance for violations
-- Generate code fixes aligned with MISRA standards
-
 ## Integration with CI/CD
 
 ### GitHub Actions example
@@ -301,10 +481,7 @@ Copilot can then:
       -compiler gcc_13-64 \
       -- gcc -Iinclude src/Account.cxx src/Bank.cxx \
       -report reports/misra_cpp_2023
-    
-    # Extract violation count
-    VIOLATIONS=$(grep -o 'violations="[0-9]*"' reports/report.xml | head -1)
-    echo "Static analysis complete: $VIOLATIONS"
+    echo "Static analysis complete"
 ```
 
 ## References
