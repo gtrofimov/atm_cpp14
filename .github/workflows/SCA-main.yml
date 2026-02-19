@@ -95,7 +95,9 @@ jobs:
         # reportFormat: xml,html,custom
         # additionalParams: '-property report.custom.extension=sarif -property report.custom.xsl.file=${PARASOFT_SARIF_XSL}'
         installDir: ${{ github.workspace }}/cpptest
-        additionalParams: -compiler gcc_13-64 -publish -exclude "**/googletest/**" -exclude "**/tests/**" -exclude "**/googlemock/**"
+        compilerConfig: gcc_13-64
+        testConfig: 'builtin://MISRA C++ 2023'
+        additionalParams: -publish -exclude "**/googletest/**" -exclude "**/tests/**" -exclude "**/googlemock/**"
 
     # Uploads analysis results in the SARIF format, so that they are displayed as GitHub code scanning alerts.
   #  - name: Upload results (SARIF)
