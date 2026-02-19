@@ -25,7 +25,7 @@ jobs:
       id-token: write
 
     # Specifies the type of runner that the job will run on.
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job.
     steps:
@@ -38,6 +38,15 @@ jobs:
     # Checks out your repository under $GITHUB_WORKSPACE, so that your job can access it.
     - name: Checkout code
       uses: actions/checkout@v4
+
+    # Extract cpptestcli from the official Parasoft Docker image
+    - name: Extract cpptestcli from Docker image
+      run: |
+        docker pull parasoft/cpptest:latest
+        docker create --name cpptest-extract parasoft/cpptest:latest
+        docker cp cpptest-extract:/opt/parasoft/cpptest ./cpptest
+        docker rm cpptest-extract
+        echo "${{ github.workspace }}/cpptest/bin" >> $GITHUB_PATH
 
     - name: set up properties file
       run: |
@@ -59,6 +68,7 @@ jobs:
         report.suppressed_msgs=true
         scontrol.rep1.type=git
         scontrol.rep1.git.url=https://github.com/${{github.repository}}
+        scontrol.rep1.git.workspace=${{github.workspace}}
         scontrol.git.exec=git
         logging.verbose=true
         dtp.additional.settings=report.coverage.images\=all;cpptest_ut
@@ -84,8 +94,8 @@ jobs:
         # Uncomment if you are using C/C++test 2020.2 to generate a SARIF report:
         # reportFormat: xml,html,custom
         # additionalParams: '-property report.custom.extension=sarif -property report.custom.xsl.file=${PARASOFT_SARIF_XSL}'
-        installDir: $CPPTEST_STD
-        additionalParams: -publish -exclude "**/googletest/**" -exclude "**/tests/**" -exclude "**/googlemock/**"
+        installDir: ${{ github.workspace }}/cpptest
+        additionalParams: -compiler gcc_13-64 -publish -exclude "**/googletest/**" -exclude "**/tests/**" -exclude "**/googlemock/**"
 
     # Uploads analysis results in the SARIF format, so that they are displayed as GitHub code scanning alerts.
   #  - name: Upload results (SARIF)
