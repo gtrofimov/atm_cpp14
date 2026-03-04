@@ -1,0 +1,165 @@
+pipeline {
+  agent { label 'self-hosted' }
+
+  options {
+    skipDefaultCheckout(true)
+  }
+
+  parameters {
+    booleanParam(
+      name: 'PUBLISH_TO_DTP',
+      defaultValue: false,
+      description: 'Force DTP publish for non-main branches'
+    )
+  }
+
+  environment {
+    DTP_PROJECT = 'ATM'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Set Build Metadata') {
+      steps {
+        script {
+          env.BUILD_ID = sh(script: "date +build-%Y-%m-%d-%H-%M", returnStdout: true).trim()
+          if (env.BRANCH_NAME == 'main') {
+            env.LINE_COV_GATE = '0'
+            env.MCDC_COV_GATE = '0'
+            env.REPORT_DTP_PUBLISH = env.DTP_PUBLISH ?: 'false'
+          } else {
+            env.LINE_COV_GATE = '29'
+            env.MCDC_COV_GATE = '35'
+            env.REPORT_DTP_PUBLISH =
+              params.PUBLISH_TO_DTP ? (env.DTP_PUBLISH ?: 'true') : 'false'
+          }
+        }
+      }
+    }
+
+    stage('Setup Properties') {
+      steps {
+        sh '''
+          set -euo pipefail
+
+          REPO_URL="${GIT_URL:-https://github.com/gtrofimov/atm_cpp14}"
+
+          cat > cpptestcli.properties <<EOF
+          parasoft.eula.accepted=true
+          cpptest.license.network.edition=server_compliance_edition
+          license.network.enabled=true
+          license.network.auth.enabled=true
+          license.network.password=${LSS_PASS}
+          license.network.url=${LSS_URL}
+          license.network.user=${LSS_USER}
+          dtp.url=${DTP_URL}
+          dtp.user=${LSS_USER}
+          dtp.password=${LSS_PASS}
+          dtp.project=${DTP_PROJECT}
+          build.id=${BUILD_ID}
+          scope.scontrol=true
+          report.suppressed_msgs=true
+          scontrol.rep1.type=git
+          scontrol.rep1.git.url=${REPO_URL}
+          scontrol.git.exec=git
+          logging.verbose=true
+          dtp.additional.settings=report.coverage.images\=all;cpptest_ut
+          report.dtp.publish=${REPORT_DTP_PUBLISH}
+          EOF
+          '''
+      }
+    }
+
+    stage('Configure CMake') {
+      steps {
+        sh 'cmake -DCPPTEST_COVERAGE=ON -DCPPTEST_HOME=$CPPTEST_CT -S . -B build'
+      }
+    }
+
+    stage('Build') {
+      steps {
+        sh 'cmake --build build'
+      }
+    }
+
+    stage('Run Tests') {
+      steps {
+        script {
+          catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+            sh '''
+              set -euo pipefail
+              cd build
+              rm -rf /cpptest-coverage/ATM_Cpp14_lib/ATM_Cpp14_lib.clog
+              rm -rf cpptest-coverage/ATM_Cpp14_lib/ATM_Cpp14_lib.clog
+              rm -rf gtest_results.xml
+              ./atm_gtest --gtest_output=xml:atm_gtest_results.xml
+              '''
+          }
+        }
+      }
+    }
+
+    stage('Generate Reports') {
+      steps {
+        sh 'cd build && make cpptestcov-compute cpptestcov-suppress cpptestcov-report'
+      }
+    }
+
+    stage('Publish Reports to DTP') {
+      when {
+        expression { env.BRANCH_NAME == 'main' || params.PUBLISH_TO_DTP }
+      }
+      steps {
+        sh(
+          'cpptestcov report dtp -settings cpptestcli.properties ' +
+          '-property build.id=${BUILD_ID} -property dtp.project=${DTP_PROJECT} ' +
+          '.coverage build/atm_gtest_results.xml'
+        )
+      }
+    }
+
+    stage('Line Coverage Quality Gate') {
+      steps {
+        sh '''
+          set -euo pipefail
+          NUMBER=$(cpptestcov query -coverage LC .coverage)
+          if [ "$NUMBER" -lt "$LINE_COV_GATE" ]; then
+            echo "Line coverage quality gate failed"
+            echo "Expected result ${LINE_COV_GATE}%, achieved ${NUMBER}%"
+            exit 1
+          else
+            echo "Line coverage quality gate passed with ${NUMBER}% (required ${LINE_COV_GATE}%)"
+          fi
+          '''
+      }
+    }
+
+    stage('MCDC Coverage Quality Gate') {
+      steps {
+        sh '''
+          set -euo pipefail
+          NUMBER=$(cpptestcov query -coverage MCDC .coverage)
+          if [ "$NUMBER" -lt "$MCDC_COV_GATE" ]; then
+            echo "MCDC coverage quality gate failed"
+            echo "Expected result ${MCDC_COV_GATE}%, achieved ${NUMBER}%"
+            exit 1
+          else
+            echo "MC/DC coverage quality gate passed with ${NUMBER}% (required ${MCDC_COV_GATE}%)"
+          fi
+          '''
+      }
+    }
+  }
+
+  post {
+    always {
+      archiveArtifacts artifacts: '.coverage/*.*', allowEmptyArchive: true
+      archiveArtifacts artifacts: 'build/atm_gtest_results.xml', allowEmptyArchive: true
+    }
+  }
+}

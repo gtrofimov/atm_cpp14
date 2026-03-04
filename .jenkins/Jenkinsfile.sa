@@ -1,0 +1,140 @@
+pipeline {
+  agent { label 'linux-docker' }
+
+  options {
+    skipDefaultCheckout(true)
+  }
+
+  parameters {
+    booleanParam(
+      name: 'PUBLISH_TO_DTP',
+      defaultValue: false,
+      description: 'Force DTP publish for non-main branches'
+    )
+  }
+
+  environment {
+    DTP_PROJECT = 'ATM'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Set Build Metadata') {
+      steps {
+        script {
+          env.BUILD_ID = sh(script: "date +build-%Y-%m-%d-%H-%M", returnStdout: true).trim()
+          env.IS_MAIN = (env.BRANCH_NAME == 'main') ? 'true' : 'false'
+          env.IS_PR = env.CHANGE_ID ? 'true' : 'false'
+          env.REPORT_DTP_PUBLISH =
+            (env.BRANCH_NAME == 'main' || params.PUBLISH_TO_DTP)
+              ? (env.DTP_PUBLISH ?: 'true')
+              : 'false'
+        }
+      }
+    }
+
+    stage('Extract cpptestcli from Docker image') {
+      steps {
+        sh '''
+          set -euo pipefail
+
+          docker pull parasoft/cpptest:latest
+          docker create --name cpptest-extract parasoft/cpptest:latest
+          docker cp cpptest-extract:/opt/parasoft/cpptest ./cpptest
+          docker rm cpptest-extract
+          '''
+      }
+    }
+
+    stage('Setup Properties') {
+      steps {
+        sh '''
+          set -euo pipefail
+          
+          REPO_URL="${GIT_URL:-https://github.com/gtrofimov/atm_cpp14}"
+          
+          cat > cpptestcli.properties <<EOF
+          parasoft.eula.accepted=true
+          cpptest.license.network.edition=server_compliance_edition
+          license.network.enabled=true
+          license.network.auth.enabled=true
+          license.network.password=${LSS_PASS}
+          license.network.url=${LSS_URL}
+          license.network.user=${LSS_USER}
+          dtp.url=${DTP_URL}
+          dtp.user=${LSS_USER}
+          dtp.password=${LSS_PASS}
+          dtp.project=${DTP_PROJECT}
+          build.id=${BUILD_ID}
+          scope.scontrol=true
+          report.suppressed_msgs=true
+          scontrol.rep1.type=git
+          scontrol.rep1.git.url=${REPO_URL}
+          scontrol.rep1.git.workspace=${WORKSPACE}
+          scontrol.git.exec=git
+          logging.verbose=true
+          dtp.additional.settings=report.coverage.images\=all;cpptest_ut
+          report.dtp.publish=${REPORT_DTP_PUBLISH}
+          EOF
+          
+          if [ "${IS_PR}" = "true" ]; then
+            {
+              echo "scope.scontrol.files.filter.mode=branch"
+              echo "scope.scontrol.ref.branch=origin/main"
+            } >> cpptestcli.properties
+          fi
+          '''
+        }
+    }
+
+    stage('Configure project') {
+      steps {
+        sh 'cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -S . -B build'
+      }
+    }
+
+    stage('Build project (optional)') {
+      when {
+        expression { env.IS_PR == 'true' }
+      }
+      steps {
+        sh 'cmake --build build'
+      }
+    }
+
+    stage('Run MISRA Analysis') {
+      steps {
+        sh '''
+          set -euo pipefail
+          
+          PUBLISH_ARG=""
+          if [ "${IS_MAIN}" = "true" ] || [ "${PUBLISH_TO_DTP}" = "true" ]; then
+            PUBLISH_ARG="-publish"
+          fi
+          
+          ./cpptest/bin/cpptestcli \
+            -config "builtin://MISRA C++ 2023" \
+            -input build/compile_commands.json \
+            -compiler gcc_13-64 \
+            -settings cpptestcli.properties \
+            ${PUBLISH_ARG} \
+            -exclude "**/googletest/**" \
+            -exclude "**/tests/**" \
+            -exclude "**/googlemock/**" \
+            -report reports
+          '''
+      }
+    }
+  }
+
+  post {
+    always {
+      archiveArtifacts artifacts: 'reports/*.*', allowEmptyArchive: true
+    }
+  }
+}
