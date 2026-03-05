@@ -147,21 +147,18 @@ function (cpptest_enable_coverage)
   add_custom_target(cpptestcov-report
     COMMAND
     ${CPPTEST_HOME_DIR}/bin/cpptestcov report text
-        ${CPPTEST_SETTINGS_FLAG}
         -root ${CPPTEST_SOURCE_DIR}
         -coverage ${CPPTEST_COVERAGE_TYPE_REPORT}
         "${CPPTEST_SOURCE_DIR}/.coverage" >
         "${CPPTEST_SOURCE_DIR}/.coverage/coverage.txt"
     &&
     ${CPPTEST_HOME_DIR}/bin/cpptestcov report markdown
-        ${CPPTEST_SETTINGS_FLAG}
         -root ${CPPTEST_SOURCE_DIR}
         -coverage ${CPPTEST_COVERAGE_TYPE_REPORT}
         "${CPPTEST_SOURCE_DIR}/.coverage" >
         "${CPPTEST_SOURCE_DIR}/.coverage/coverage.md"
     &&
     ${CPPTEST_HOME_DIR}/bin/cpptestcov report html
-        ${CPPTEST_SETTINGS_FLAG}
         -root ${CPPTEST_SOURCE_DIR}
         -coverage ${CPPTEST_COVERAGE_TYPE_REPORT}
         -code
@@ -169,7 +166,6 @@ function (cpptest_enable_coverage)
         "${CPPTEST_SOURCE_DIR}/.coverage"
     &&
     ${CPPTEST_HOME_DIR}/bin/cpptestcov report text
-        ${CPPTEST_SETTINGS_FLAG}
         -root ${CPPTEST_SOURCE_DIR}
         -coverage ${CPPTEST_COVERAGE_TYPE_REPORT}
         "${CPPTEST_SOURCE_DIR}/.coverage"
@@ -179,7 +175,6 @@ function (cpptest_enable_coverage)
   add_custom_target(cpptestcov-suppress
     COMMAND
     ${CPPTEST_HOME_DIR}/bin/cpptestcov suppress
-        ${CPPTEST_SETTINGS_FLAG}
         "${CPPTEST_SOURCE_DIR}/.coverage"
   )
 
