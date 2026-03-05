@@ -1,5 +1,5 @@
 pipeline {
-  agent { label 'self-hosted' }
+  agent any
 
   options {
     skipDefaultCheckout(true)
