@@ -48,9 +48,9 @@ function (cpptest_enable_coverage)
 
   # Configure settings file for licensing
   if(CPPTEST_SETTINGS)
-    set(CPPTEST_SETTINGS_FLAG "-settings" "${CPPTEST_SETTINGS}")
+    set(CPPTEST_SETTINGS_FLAG "-settings" "\"${CPPTEST_SETTINGS}\"")
   elseif(DEFINED ENV{CPPTEST_SETTINGS})
-    set(CPPTEST_SETTINGS_FLAG "-settings" "$ENV{CPPTEST_SETTINGS}")
+    set(CPPTEST_SETTINGS_FLAG "-settings" "\"$ENV{CPPTEST_SETTINGS}\"")
   else()
     set(CPPTEST_SETTINGS_FLAG "")
   endif()

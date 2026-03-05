@@ -102,7 +102,7 @@ pipeline {
           rm -rf build
           cmake -DCPPTEST_COVERAGE=ON \
                 -DCPPTEST_HOME=$CPPTEST_CT \
-                -DCPPTEST_SETTINGS=${WORKSPACE}/cpptestct.properties \
+                -DCPPTEST_SETTINGS="${WORKSPACE}/cpptestct.properties" \
                 -S . -B build
         '''
       }
