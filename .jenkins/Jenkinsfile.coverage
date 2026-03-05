@@ -140,6 +140,15 @@ pipeline {
       }
     }
 
+    stage('Publish Findings (Coverage)') {
+      steps {
+        recordParasoftCoverage(
+          pattern: '.coverage/coverage.xml',
+          sourceCodeEncoding: 'UTF-8'
+        )
+      }
+    }
+
     stage('Publish Reports to DTP') {
       when {
         expression { env.BRANCH_NAME == 'main' || params.PUBLISH_TO_DTP }

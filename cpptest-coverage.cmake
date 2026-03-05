@@ -142,6 +142,7 @@ function (cpptest_enable_coverage)
   # Generate coverage reports:
   # - plain text: ${CPPTEST_SOURCE_DIR}/.coverage/coverage.txt
   # - markdown: ${CPPTEST_SOURCE_DIR}/.coverage/coverage.md
+  # - xml: ${CPPTEST_SOURCE_DIR}/.coverage/coverage.xml
   # - html: ${CPPTEST_SOURCE_DIR}/.coverage/coverage.html
   # - console output
   add_custom_target(cpptestcov-report
@@ -157,6 +158,12 @@ function (cpptest_enable_coverage)
         -coverage ${CPPTEST_COVERAGE_TYPE_REPORT}
         "${CPPTEST_SOURCE_DIR}/.coverage" >
         "${CPPTEST_SOURCE_DIR}/.coverage/coverage.md"
+    &&
+    ${CPPTEST_HOME_DIR}/bin/cpptestcov report xml
+      -root ${CPPTEST_SOURCE_DIR}
+      -coverage ${CPPTEST_COVERAGE_TYPE_REPORT}
+      "${CPPTEST_SOURCE_DIR}/.coverage" >
+      "${CPPTEST_SOURCE_DIR}/.coverage/coverage.xml"
     &&
     ${CPPTEST_HOME_DIR}/bin/cpptestcov report html
         -root ${CPPTEST_SOURCE_DIR}
