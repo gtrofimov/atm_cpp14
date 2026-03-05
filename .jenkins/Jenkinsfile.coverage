@@ -5,6 +5,9 @@ pipeline {
     skipDefaultCheckout(true)
   }
 
+  environment {
+    PATH = "${env.CPPTEST_CT}/bin:${env.PATH}"
+  }
   parameters {
     string(
       name: 'LSS_URL',
