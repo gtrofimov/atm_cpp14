@@ -98,7 +98,10 @@ pipeline {
 
     stage('Configure CMake') {
       steps {
-        sh 'cmake -DCPPTEST_COVERAGE=ON -DCPPTEST_HOME=$CPPTEST_CT -S . -B build'
+        sh '''
+          rm -rf build
+          cmake -DCPPTEST_COVERAGE=ON -DCPPTEST_HOME=$CPPTEST_CT -S . -B build
+        '''
       }
     }
 
