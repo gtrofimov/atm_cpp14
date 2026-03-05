@@ -136,29 +136,59 @@ pipeline {
 
     stage('Generate Reports') {
       steps {
-        sh 'cd build && make cpptestcov-compute cpptestcov-suppress cpptestcov-report'
+        sh 'cd build && make cpptestcov-compute cpptestcov-suppress'
+        script {
+          catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+            sh 'cd build && make cpptestcov-report'
+          }
+        }
+      }
+    }
+
+    stage('Generate Findings Coverage XML') {
+      steps {
+        script {
+          catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+            sh(
+              'cpptestcov report dtp -settings cpptestct.properties ' +
+              '-property report.dtp.publish=false ' +
+              '.coverage build/atm_gtest_results.xml'
+            )
+          }
+        }
       }
     }
 
     stage('Publish Findings (Coverage)') {
       steps {
-        recordParasoftCoverage(
-          pattern: '/build/**/coverage.xml',
-          sourceCodeEncoding: 'UTF-8'
-        )
+        script {
+          catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+            recordParasoftCoverage(
+              pattern: 'build/.cpptest/report/**/coverage.xml',
+              sourceCodeEncoding: 'UTF-8'
+            )
+          }
+        }
       }
     }
 
     stage('Publish Reports to DTP') {
       when {
-        expression { env.BRANCH_NAME == 'main' || params.PUBLISH_TO_DTP }
+        expression {
+          (env.BRANCH_NAME == 'main' || params.PUBLISH_TO_DTP) &&
+          params.DTP_URL?.trim()
+        }
       }
       steps {
-        sh(
-          'cpptestcov report dtp -settings cpptestct.properties ' +
-          '-property build.id=${BUILD_ID} -property dtp.project=${DTP_PROJECT} ' +
-          '.coverage build/atm_gtest_results.xml'
-        )
+        script {
+          catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+            sh(
+              'cpptestcov report dtp -settings cpptestct.properties ' +
+              '-property build.id=${BUILD_ID} -property dtp.project=${DTP_PROJECT} ' +
+              '.coverage build/atm_gtest_results.xml'
+            )
+          }
+        }
       }
     }
 
