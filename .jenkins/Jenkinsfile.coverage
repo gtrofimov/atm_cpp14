@@ -6,15 +6,36 @@ pipeline {
   }
 
   parameters {
+    string(
+      name: 'LSS_URL',
+      defaultValue: '',
+      description: 'Parasoft License Server URL'
+    )
+    string(
+      name: 'LSS_USER',
+      defaultValue: '',
+      description: 'Parasoft License Server username'
+    )
+    password(
+      name: 'LSS_PASS',
+      defaultValue: '',
+      description: 'Parasoft License Server password'
+    )
+    string(
+      name: 'DTP_URL',
+      defaultValue: '',
+      description: 'Parasoft DTP URL'
+    )
+    string(
+      name: 'DTP_PROJECT',
+      defaultValue: 'ATM',
+      description: 'DTP project name'
+    )
     booleanParam(
       name: 'PUBLISH_TO_DTP',
       defaultValue: false,
       description: 'Force DTP publish for non-main branches'
     )
-  }
-
-  environment {
-    DTP_PROJECT = 'ATM'
   }
 
   stages {
