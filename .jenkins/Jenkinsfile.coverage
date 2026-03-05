@@ -3,6 +3,7 @@ pipeline {
 
   options {
     skipDefaultCheckout(true)
+    buildDiscarder(logRotator(numToKeepStr: '5', artifactNumToKeepStr: '2'))
   }
 
   environment {
@@ -226,7 +227,7 @@ pipeline {
   }
 
   post {
-    always {
+    success {
       archiveArtifacts artifacts: '.coverage/*.*', allowEmptyArchive: true
       archiveArtifacts artifacts: 'build/atm_gtest_results.xml', allowEmptyArchive: true
     }

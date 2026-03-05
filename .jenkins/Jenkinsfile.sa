@@ -3,6 +3,7 @@ pipeline {
 
   options {
     skipDefaultCheckout(true)
+    buildDiscarder(logRotator(numToKeepStr: '5', artifactNumToKeepStr: '2'))
   }
 
   parameters {
@@ -169,7 +170,7 @@ pipeline {
   }
 
   post {
-    always {
+    success {
       archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true
     }
   }
