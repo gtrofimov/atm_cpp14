@@ -72,6 +72,19 @@ pipeline {
       }
     }
 
+    stage('Debug: Verify cpptest extraction') {
+      steps {
+        sh '''
+          echo "=== Docker info ==="
+          docker info || true
+          echo "=== cpptest directory ==="
+          ls -la ./cpptest || echo "ERROR: ./cpptest does not exist"
+          echo "=== cpptest/bin ==="
+          ls -la ./cpptest/bin || echo "ERROR: ./cpptest/bin does not exist"
+          '''
+      }
+    }
+
     stage('Setup Properties') {
       steps {
         sh '''
