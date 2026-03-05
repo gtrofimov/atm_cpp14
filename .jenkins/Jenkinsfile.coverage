@@ -164,7 +164,7 @@ pipeline {
         script {
           catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
             recordParasoftCoverage(
-              pattern: 'build/.cpptest/report/**/coverage.xml',
+              pattern: 'build/**/coverage.xml',
               sourceCodeEncoding: 'UTF-8'
             )
           }
