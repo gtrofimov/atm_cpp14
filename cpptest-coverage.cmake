@@ -136,7 +136,6 @@ function (cpptest_enable_coverage)
         -coverage=${CPPTEST_COVERAGE_TYPE_REPORT}
     &&
     ${CPPTEST_HOME_DIR}/bin/cpptestcov index
-        ${CPPTEST_SETTINGS_FLAG}
         "${CPPTEST_SOURCE_DIR}/.coverage"   
   )
 
