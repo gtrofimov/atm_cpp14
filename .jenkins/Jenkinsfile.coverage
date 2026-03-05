@@ -91,7 +91,7 @@ pipeline {
             echo "logging.verbose=true"
             echo "dtp.additional.settings=report.coverage.images=all;cpptest_ut"
             echo "report.dtp.publish=${REPORT_DTP_PUBLISH}"
-          } > cpptestcli.properties
+          } > cpptestct.properties
           '''
       }
     }
@@ -100,7 +100,10 @@ pipeline {
       steps {
         sh '''
           rm -rf build
-          cmake -DCPPTEST_COVERAGE=ON -DCPPTEST_HOME=$CPPTEST_CT -S . -B build
+          cmake -DCPPTEST_COVERAGE=ON \
+                -DCPPTEST_HOME=$CPPTEST_CT \
+                -DCPPTEST_SETTINGS=${WORKSPACE}/cpptestct.properties \
+                -S . -B build
         '''
       }
     }
@@ -140,7 +143,7 @@ pipeline {
       }
       steps {
         sh(
-          'cpptestcov report dtp -settings cpptestcli.properties ' +
+          'cpptestcov report dtp -settings cpptestct.properties ' +
           '-property build.id=${BUILD_ID} -property dtp.project=${DTP_PROJECT} ' +
           '.coverage build/atm_gtest_results.xml'
         )

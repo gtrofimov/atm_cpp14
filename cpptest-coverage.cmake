@@ -46,6 +46,15 @@ function (cpptest_enable_coverage)
     message(FATAL_ERROR "CPPTEST_HOME not set" )
   endif()
 
+  # Configure settings file for licensing
+  if(CPPTEST_SETTINGS)
+    set(CPPTEST_SETTINGS_FLAG -settings ${CPPTEST_SETTINGS})
+  elseif(DEFINED ENV{CPPTEST_SETTINGS})
+    set(CPPTEST_SETTINGS_FLAG -settings $ENV{CPPTEST_SETTINGS})
+  else()
+    set(CPPTEST_SETTINGS_FLAG "")
+  endif()
+
   # Build C/C++test coverage runtime library
   set(CPPTEST_RUNTIME_BUILD_DIR ${CMAKE_BINARY_DIR}/cpptest-runtime)
 
@@ -120,12 +129,14 @@ function (cpptest_enable_coverage)
     mkdir -p "${CPPTEST_SOURCE_DIR}/.coverage"
     &&
     ${CPPTEST_HOME_DIR}/bin/cpptestcov compute
+        ${CPPTEST_SETTINGS_FLAG}
         -map="${CPPTEST_COVERAGE_WORKSPACE}/.cpptest/cpptestcc"
         -clog="${CPPTEST_COVERAGE_LOG_FILE}"
         -out="${CPPTEST_SOURCE_DIR}/.coverage"
         -coverage=${CPPTEST_COVERAGE_TYPE_REPORT}
     &&
     ${CPPTEST_HOME_DIR}/bin/cpptestcov index
+        ${CPPTEST_SETTINGS_FLAG}
         "${CPPTEST_SOURCE_DIR}/.coverage"   
   )
 
@@ -137,18 +148,21 @@ function (cpptest_enable_coverage)
   add_custom_target(cpptestcov-report
     COMMAND
     ${CPPTEST_HOME_DIR}/bin/cpptestcov report text
+        ${CPPTEST_SETTINGS_FLAG}
         -root ${CPPTEST_SOURCE_DIR}
         -coverage ${CPPTEST_COVERAGE_TYPE_REPORT}
         "${CPPTEST_SOURCE_DIR}/.coverage" >
         "${CPPTEST_SOURCE_DIR}/.coverage/coverage.txt"
     &&
     ${CPPTEST_HOME_DIR}/bin/cpptestcov report markdown
+        ${CPPTEST_SETTINGS_FLAG}
         -root ${CPPTEST_SOURCE_DIR}
         -coverage ${CPPTEST_COVERAGE_TYPE_REPORT}
         "${CPPTEST_SOURCE_DIR}/.coverage" >
         "${CPPTEST_SOURCE_DIR}/.coverage/coverage.md"
     &&
     ${CPPTEST_HOME_DIR}/bin/cpptestcov report html
+        ${CPPTEST_SETTINGS_FLAG}
         -root ${CPPTEST_SOURCE_DIR}
         -coverage ${CPPTEST_COVERAGE_TYPE_REPORT}
         -code
@@ -156,6 +170,7 @@ function (cpptest_enable_coverage)
         "${CPPTEST_SOURCE_DIR}/.coverage"
     &&
     ${CPPTEST_HOME_DIR}/bin/cpptestcov report text
+        ${CPPTEST_SETTINGS_FLAG}
         -root ${CPPTEST_SOURCE_DIR}
         -coverage ${CPPTEST_COVERAGE_TYPE_REPORT}
         "${CPPTEST_SOURCE_DIR}/.coverage"
@@ -165,6 +180,7 @@ function (cpptest_enable_coverage)
   add_custom_target(cpptestcov-suppress
     COMMAND
     ${CPPTEST_HOME_DIR}/bin/cpptestcov suppress
+        ${CPPTEST_SETTINGS_FLAG}
         "${CPPTEST_SOURCE_DIR}/.coverage"
   )
 
