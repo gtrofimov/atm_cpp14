@@ -99,7 +99,7 @@ pipeline {
           scontrol.rep1.git.workspace=${WORKSPACE}
           scontrol.git.exec=git
           logging.verbose=true
-          dtp.additional.settings=report.coverage.images\=all;cpptest_ut
+          dtp.additional.settings=report.coverage.images=all;cpptest_ut
           report.dtp.publish=${REPORT_DTP_PUBLISH}
           EOF
           
