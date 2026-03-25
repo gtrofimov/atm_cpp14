@@ -9,5 +9,13 @@ ATM_Cpp14_lib.a
 *.properties
 **/*.properties
 .cpptest
-reports
+reports/**
+!reports/misra_cpp_2023_baseline/
+!reports/misra_cpp_2023_baseline/report.xml
+!reports/misra_cpp_2023_baseline/report.sarif
 Debug
+.github/skills/**/misra_analysis*.log
+misra_*.log
+MCDC_*.md
+MCDC_*.txt
+misra_analysis.log
