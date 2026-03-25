@@ -24,7 +24,7 @@ function (cpptest_enable_coverage)
   endif()
 
   # Configure C/C++test compiler identifier
-  set(CPPTEST_COMPILER_ID "gcc_11-64")
+  set(CPPTEST_COMPILER_ID "gcc_13-64")
   # Configure coverage type(s) for instrumentation engine - see 'cpptestcc -help' for details
   set(CPPTEST_COVERAGE_TYPE_INSTRUMENTATION -line-coverage -mcdc-coverage)
   # Configure coverage type(s) for reporting engine - see 'cpptestcov -help' for details
@@ -44,15 +44,6 @@ function (cpptest_enable_coverage)
   
   if(NOT CPPTEST_HOME_DIR)
     message(FATAL_ERROR "CPPTEST_HOME not set" )
-  endif()
-
-  # Configure settings file for licensing
-  if(CPPTEST_SETTINGS)
-    set(CPPTEST_SETTINGS_FLAG "-settings" "\"${CPPTEST_SETTINGS}\"")
-  elseif(DEFINED ENV{CPPTEST_SETTINGS})
-    set(CPPTEST_SETTINGS_FLAG "-settings" "\"$ENV{CPPTEST_SETTINGS}\"")
-  else()
-    set(CPPTEST_SETTINGS_FLAG "")
   endif()
 
   # Build C/C++test coverage runtime library
@@ -129,7 +120,6 @@ function (cpptest_enable_coverage)
     mkdir -p "${CPPTEST_SOURCE_DIR}/.coverage"
     &&
     ${CPPTEST_HOME_DIR}/bin/cpptestcov compute
-        ${CPPTEST_SETTINGS_FLAG}
         -map="${CPPTEST_COVERAGE_WORKSPACE}/.cpptest/cpptestcc"
         -clog="${CPPTEST_COVERAGE_LOG_FILE}"
         -out="${CPPTEST_SOURCE_DIR}/.coverage"
@@ -140,7 +130,7 @@ function (cpptest_enable_coverage)
   )
 
   # Generate coverage reports:
-  # - text: ${CPPTEST_SOURCE_DIR}/.coverage/coverage.txt
+  # - plain text: ${CPPTEST_SOURCE_DIR}/.coverage/coverage.txt
   # - markdown: ${CPPTEST_SOURCE_DIR}/.coverage/coverage.md
   # - html: ${CPPTEST_SOURCE_DIR}/.coverage/coverage.html
   # - console output
