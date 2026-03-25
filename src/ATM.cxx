@@ -68,5 +68,5 @@ void ATM::withdraw(double amount)
 // Dummy function to demonstrate adding new methods
 void ATM::exampleFunction()
 {
-    myDisplay->showInfoToUser("This is a dummy function");
+    myDisplay->showInfoToUser("This is an example function that does nothing");
 }
