@@ -27,6 +27,7 @@ class ATM
         void fillUserRequest(UserRequest request, double amount);
         void resetSession();
         bool isAccountActive() const;
+        int calcFee(int accountType, int amount);
 
     private:
 

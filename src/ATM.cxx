@@ -81,3 +81,22 @@ bool ATM::isAccountActive() const
     return (myCurrentAccount != nullptr) && (myCurrentAccount->getBalance() >= 0.0);
 }
 
+// Example function with intentional MISRA C++ 2023 violations for demonstration
+int ATM::calcFee(int accountType, int amount)
+{
+    int fee;                          // MISRA 8.1.1: variable not initialized (uninitialized read risk)
+    int* p = NULL;                    // MISRA 7.11.1: use of NULL macro instead of nullptr
+
+    if (accountType == 1) {
+        fee = amount * 0.02;          // MISRA 8.3.1: implicit conversion from double to int
+        p = &fee;
+        goto done;                    // MISRA 9.2.1: use of goto statement
+    } else {
+        fee = amount * 0.05;
+        p = &fee;
+    }
+
+done:
+    return *p;
+}
+
