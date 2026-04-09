@@ -17,7 +17,7 @@ permissions:
 jobs:
   build:
     name: Build and Test
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     continue-on-error: true
 
     steps:
@@ -27,6 +27,15 @@ jobs:
       shell: bash
       working-directory: ${{github.workspace}}
       run: echo "build_id=build-$(date +'%Y-%m-%d-%H-%M')" >> $GITHUB_ENV
+
+    # Extract C/C++test tools from the official Parasoft Docker image
+    - name: Extract C/C++test from Docker image
+      run: |
+        docker pull parasoft/cpptest:latest
+        docker create --name cpptest-extract parasoft/cpptest:latest
+        docker cp cpptest-extract:/opt/parasoft/cpptest ./cpptest
+        docker rm cpptest-extract
+        echo "${{ github.workspace }}/cpptest/bin" >> $GITHUB_PATH
 
     # Set up properties file
     - name: set up properties file
@@ -57,7 +66,7 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}
-      run: cmake -DCPPTEST_COVERAGE=ON -DCPPTEST_HOME=$CPPTEST_CT -S . -B build
+      run: cmake -DCPPTEST_COVERAGE=ON -DCPPTEST_HOME=${{ github.workspace }}/cpptest -S . -B build
 
     - name: Build 
       working-directory: ${{github.workspace}}
