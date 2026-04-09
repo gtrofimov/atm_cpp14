@@ -25,3 +25,11 @@ Base all fix suggestions on the MCP-retrieved rule documentation, not on general
 ## MCP Tool Parallelism
 
 **Never** call `cpptest-ct` or `cpptest-sa` MCP tools in parallel. Always invoke them sequentially, waiting for each call to complete before making the next one.
+
+## Tool Selection Policy
+
+This repository is C/C++ only. Use **only** Parasoft C/C++test tools and related `cpptest-*` workflows for analysis, reporting, and remediation.
+
+- Do **not** invoke Jtest or Java-focused analysis tools.
+- Do **not** use Java-oriented workflows for C/C++ tasks.
+- If a generic static-analysis tool is available, prefer the repository C/C++test scripts and `cpptest-*` MCP tools instead.
