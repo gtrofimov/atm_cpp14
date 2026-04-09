@@ -1,0 +1,21 @@
+name: Copilot Setup Steps
+
+on:
+  workflow_dispatch:
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Write cpptestcli.properties
+        run: |
+          cat > "$HOME/cpptestcli.properties" <<'EOF'
+          parasoft.eula.accepted=true
+          cpptest.license.network.edition=server_compliance_edition
+          license.network.enabled=true
+          license.network.auth.enabled=true
+          EOF
+          echo "license.network.url=${{ secrets.LSS_URL }}" >> "$HOME/cpptestcli.properties"
+          echo "license.network.user=${{ vars.LSS_USER }}" >> "$HOME/cpptestcli.properties"
+          echo "license.network.password=${{ secrets.LSS_PASS }}" >> "$HOME/cpptestcli.properties"
