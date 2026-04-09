@@ -17,10 +17,14 @@ Do **not** parse report XML manually with Python, bash, or grep. Always invoke t
 
 When suggesting fixes for any static analysis violation, you **MUST**:
 
-1. Call `cpptest-sa-get_rule_documentation` with the rule ID to retrieve the official rule explanation before proposing a fix.
-2. Optionally call `cpptest-sa-get_relevant_rules` to find related rules that may also apply.
+1. Use the `cpptest-get-rule-docs` skill as the primary method to retrieve rule documentation for each violation.
+2. The skill must call `cpptest-sa-get_rule_documentation` first, and for custom/missing rules must fall back to `/home/gtrofimov/parasoft/2025.2/std/cpptest/rules/user` using shell parsing logic (no Python).
+3. Optionally call `cpptest-sa-get_relevant_rules` to find related rules that may also apply.
 
 Base all fix suggestions on the MCP-retrieved rule documentation, not on general knowledge alone.
+
+Canonical reusable wording for this policy is stored at:
+- `.github/skills/cpptest-get-rule-docs/references/policy-snippet.md`
 
 ## MCP Tool Parallelism
 

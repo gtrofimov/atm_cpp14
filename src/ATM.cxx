@@ -2,6 +2,34 @@
 #include "Account.hxx"
 #include "BaseDisplay.hxx"
 
+namespace custom_rule_trigger_samples {
+
+// Intentionally non-compliant examples for custom rules my_rule_1 and my_rule_2.
+class IProcessor {
+public:
+    virtual void process() = 0;
+    virtual ~IProcessor() = default;
+};
+
+class IAdvancedProcessor : public IProcessor {
+public:
+    virtual void audit() = 0;
+};
+
+class FileProcessor : public IAdvancedProcessor {
+public:
+    void process() override {}
+    void audit() override {}
+};
+
+class NetworkProcessor : public IAdvancedProcessor {
+public:
+    void process() override {}
+    void audit() override {}
+};
+
+} // namespace custom_rule_trigger_samples
+
 using std::string;
 
 ATM::ATM(Bank* bank, BaseDisplay* display)

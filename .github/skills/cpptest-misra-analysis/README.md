@@ -127,7 +127,7 @@ The skill now provides integrated MCP tools for powerful violation parsing and r
 | Tool | Purpose | Usage |
 |------|---------|-------|
 | `mcp_cpptest-sa_get_violations_from_report_file` | Extract violations from XML reports with filtering | Parse results, filter by severity/rule/file |
-| `mcp_cpptest-sa_get_rule_documentation` | Get detailed rule explanations and guidelines | Understand why a rule exists, learn best practices |
+| `cpptest-get-rule-docs` skill (primary) | MCP-first rule documentation with custom-rule fallback | Use one workflow for built-in and custom rules |
 | `mcp_cpptest-sa_get_relevant_rules` | Discover rules by natural language query | Find related compliance rules, understand scope |
 | `mcp_cpptest-sa_search_documentation` | Query C++test Standard documentation | Configuration, troubleshooting, advanced topics |
 

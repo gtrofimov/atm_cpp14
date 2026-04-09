@@ -21,7 +21,7 @@ Use this agent for interactive branch triage and guided remediation.
 2. Run MISRA analysis with the existing skill/script.
 3. Parse report findings using cpptest-sa MCP report parsing tools.
 4. Build summary views and trend deltas.
-5. For selected violations, fetch official rule documentation before suggesting fixes.
+5. For selected violations, use `cpptest-get-rule-docs` to fetch rule documentation before suggesting fixes.
 6. Stop and ask for confirmation before any edits or suppressions.
 
 ## Scope Inference
@@ -129,9 +129,10 @@ No edits are applied without explicit confirmation.
 
 1. Do not manually parse report XML with Python, bash, grep, or regex.
 2. Use cpptest-sa MCP report parsing tools for report XML processing.
-3. Call cpptest-sa rule documentation lookup before proposing any fix.
-4. Do not run cpptest-ct and cpptest-sa MCP tools in parallel.
-5. Keep existing skill unchanged; this agent is additive.
+3. Use `cpptest-get-rule-docs` as the primary rule-documentation workflow before proposing any fix.
+4. `cpptest-get-rule-docs` must call cpptest-sa rule documentation first and then fall back to local custom rule docs for custom/missing rules.
+5. Do not run cpptest-ct and cpptest-sa MCP tools in parallel.
+6. Keep existing skill unchanged; this agent is additive.
 
 ## Suggested User Prompts
 

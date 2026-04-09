@@ -316,9 +316,9 @@ C++test's MCP (Model Context Protocol) Server extension provides direct access t
    - Filter by rule ID, severity level, or source file
    - Returns structured violation data for analysis
 
-2. **`mcp_cpptest-sa_get_rule_documentation`** - Get detailed rule explanations
-   - Understand why a rule exists and its implications
-   - Learn standard-compliant coding practices
+2. **`cpptest-get-rule-docs` skill (primary)** - Get rule documentation with MCP-first behavior
+  - Uses `mcp_cpptest-sa_get_rule_documentation` first for built-in rules
+  - Falls back to local custom rule documentation for rules missing in MCP
 
 3. **`mcp_cpptest-sa_get_relevant_rules`** - Search rules by natural language description
    - Find rules related to specific coding issues
@@ -359,7 +359,7 @@ in src/ATM.cxx line 70.
 ```
 
 Copilot will:
-- Use `mcp_cpptest-sa_get_rule_documentation` to fetch rule details
+- Use the `cpptest-get-rule-docs` skill to fetch rule details (MCP first, local custom fallback)
 - Reference the exact code location
 - Provide compliant code patterns
 - Show before/after examples
@@ -396,11 +396,14 @@ Example output includes:
 
 ### Required tool usage
 
-**You MUST use MCP tools for all report parsing and fix suggestions. No exceptions.**
+**You MUST use MCP tools for report parsing and use `cpptest-get-rule-docs` for rule documentation before fix suggestions. No exceptions.**
+
+Use the shared rule-doc policy text for consistency across skills/instructions:
+- `../cpptest-get-rule-docs/references/policy-snippet.md`
 
 When parsing a C/C++test SA report:
 - **MUST** use `mcp_cpptest-sa_get_violations_from_report_file` — never parse XML manually with Python, bash, or grep
-- **MUST** use `mcp_cpptest-sa_get_rule_documentation` before suggesting any fix — retrieve the official rule explanation first
+- **MUST** use `cpptest-get-rule-docs` before suggesting any fix — this enforces MCP-first lookup and custom-rule fallback
 - Use `mcp_cpptest-sa_get_relevant_rules` to discover related rules that may also apply
 - Use `mcp_cpptest-sa_search_documentation` for configuration or troubleshooting questions
 
