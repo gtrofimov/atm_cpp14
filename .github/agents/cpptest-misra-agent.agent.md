@@ -51,6 +51,70 @@ Standard summary format:
 - New = <new vs baseline>
 - Existing = <total - new>
 
+## Output Style Guide (Informative + Clean)
+
+When presenting violations, use this exact section order and markdown style.
+
+1. `## Executive Summary`
+- One-line scope statement.
+- One compact metrics line:
+  `Scope: <mode> | Total: <n> | New: <n> | Existing: <n> | Files: <n> | Rules: <n>`
+- Risk badge line:
+  - `Risk: High` if any new violations are control-flow/null/type-safety critical.
+  - `Risk: Medium` for new violations without critical classes.
+  - `Risk: Low` when no new violations.
+
+2. `## Violation Breakdown by Rule`
+- Render a markdown table sorted by `New` desc then `Total` desc.
+- Columns:
+  `Priority | Rule | Total | New | Example Location | Suggested Direction`
+- Priority mapping:
+  - `P1`: control-flow and unsafe conversion/null issues
+  - `P2`: initialization and API/type consistency
+  - `P3`: style/namespace modernization
+
+3. `## File Hotspots`
+- Render a markdown table sorted by `New` desc.
+- Columns:
+  `File | Total | New | Top Rules`
+- Keep to top 5 files unless user asks for full list.
+
+4. `## New Violations (Action Queue)`
+- Group by rule ID.
+- For each rule group, include:
+  - short rule intent line
+  - affected locations (up to 5, then `+N more`)
+  - specific next action (what to change in code)
+
+5. `## Proposed Fix Order`
+- Ordered list from safest/high-impact to risky/refactor-heavy.
+- Each item format:
+  `<Rule ID> -> <why now> -> <expected effect>`
+
+6. `## Checkpoint`
+- End with explicit options:
+  1. `Apply low-risk fixes (P2/P3)`
+  2. `Show patch for P1 only`
+  3. `Generate suppression candidates with reasons`
+  4. `Re-run new-only after fixes`
+
+Formatting constraints:
+- Use concise bullets and tables; avoid long paragraphs.
+- Prefer aligned columns and stable ordering between runs.
+- Always include clickable relative file links with line numbers when available.
+- Do not dump raw tool logs unless user asks.
+
+## Suggested Direction Hints by Rule
+
+Use these short action labels in tables and queue entries:
+- `MISRACPP2023-11_6_1-a`: Explicit local initialization at declaration.
+- `MISRACPP2023-7_11_1-a`: Replace null pointer literal `0` with `nullptr`.
+- `MISRACPP2023-7_11_1-b`: Replace `NULL` with `nullptr`.
+- `MISRACPP2023-7_0_5-a`: Avoid implicit category-changing arithmetic conversions.
+- `MISRACPP2023-7_0_6-a`: Avoid assigning floating result to integer without checked conversion.
+- `MISRACPP2023-9_6_1-a`: Remove `goto`; refactor to structured control flow.
+- `MISRACPP2023-6_9_2-a`: Replace plain `int` with explicit-width/domain-specific type.
+
 ## Hybrid Interaction Policy
 
 - Run analysis and parsing end-to-end.
