@@ -276,7 +276,7 @@ run_analysis() {
     cd "$PROJECT_ROOT"
 
     local cpptest_cmd
-    cpptest_cmd=("$CPPTEST_STD/cpptestcli" -config "MISRA C++ 2023 + Custom.properties" -compiler "$COMPILER" -module .)
+    cpptest_cmd=("$CPPTEST_STD/cpptestcli" -config "$TEST_CONFIG" -compiler "$COMPILER" -module .)
     cpptest_cmd+=(-exclude '**/googletest/**' -exclude '**/googlemock/**' -exclude '**/tests/**')
 
     # Add scope control properties for branch or local analysis

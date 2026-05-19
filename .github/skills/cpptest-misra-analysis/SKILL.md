@@ -317,8 +317,8 @@ C++test's MCP (Model Context Protocol) Server extension provides direct access t
    - Returns structured violation data for analysis
 
 2. **`cpptest-get-rule-docs` skill (primary)** - Get rule documentation with MCP-first behavior
-  - Uses `mcp_cpptest-sa_get_rule_documentation` first for built-in rules
-  - Falls back to local custom rule documentation for rules missing in MCP
+   - Uses `mcp_cpptest-sa_get_rule_documentation` first for built-in rules
+   - Falls back to local custom rule documentation for rules missing in MCP
 
 3. **`mcp_cpptest-sa_get_relevant_rules`** - Search rules by natural language description
    - Find rules related to specific coding issues
