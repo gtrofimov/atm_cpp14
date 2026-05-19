@@ -2,7 +2,10 @@ name: Running gtests on pull request to main
 on:
   # Triggers the workflow pull request events but only for the master (main) branch.
   pull_request:
-    branches: [ master, main ]
+    branches: [ master, main, gtrofimov/misra-agent ]
+
+  # Allows you to run this workflow manually from the Actions tab.
+  workflow_dispatch:
 
 env:
   LINE_COV_GATE: 29

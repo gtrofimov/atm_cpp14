@@ -3,6 +3,9 @@ name: Running gtests, collecting coverage (push master)
 on:
   push:
     branches: [ main ]
+  
+    # Allows you to run this workflow manually from the Actions tab.
+  workflow_dispatch:
 
 env:
   LINE_COV_GATE: 0
