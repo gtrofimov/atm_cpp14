@@ -3,9 +3,6 @@ name: Running gtests, collecting coverage (push master)
 on:
   push:
     branches: [ main ]
-  
-    # Allows you to run this workflow manually from the Actions tab.
-  workflow_dispatch:
 
 env:
   LINE_COV_GATE: 0
@@ -72,7 +69,7 @@ jobs:
       working-directory: ${{github.workspace}}/build
       shell: bash
       run: |
-        rm -rf cpptest-coverage/ATM_Cpp14_lib/ATM_Cpp14_lib.clog 
+        rm -rf /cpptest-coverage/ATM_Cpp14_lib/ATM_Cpp14_lib.clog 
         rm -rf gtest_results.xml
         ./atm_gtest --gtest_output=xml:atm_gtest_results.xml
       continue-on-error: true
