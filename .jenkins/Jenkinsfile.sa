@@ -130,6 +130,30 @@ pipeline {
       }
     }
 
+    stage('Run CWE Analysis') {
+      steps {
+        sh '''
+          set -euo pipefail
+          
+          PUBLISH_ARG=""
+          if [ "${IS_MAIN}" = "true" ] || [ "${PUBLISH_TO_DTP}" = "true" ]; then
+            PUBLISH_ARG="-publish"
+          fi
+          
+          ./cpptest/cpptestcli \
+            -config "builtin://CWE Top 25 + On the Cusp 2024" \
+            -input build/compile_commands.json \
+            -compiler gcc_13-64 \
+            -settings cpptestcli.properties \
+            ${PUBLISH_ARG} \
+            -exclude "**/googletest/**" \
+            -exclude "**/tests/**" \
+            -exclude "**/googlemock/**" \
+            -report reports
+          '''
+      }
+    }
+
     stage('Run MISRA Analysis') {
       steps {
         sh '''
@@ -153,7 +177,29 @@ pipeline {
           '''
       }
     }
-
+        stage('Run CERT Analysis') {
+      steps {
+        sh '''
+          set -euo pipefail
+          
+          PUBLISH_ARG=""
+          if [ "${IS_MAIN}" = "true" ] || [ "${PUBLISH_TO_DTP}" = "true" ]; then
+            PUBLISH_ARG="-publish"
+          fi
+          
+          ./cpptest/cpptestcli \
+            -config "builtin://SEI CERT C++ Rules" \
+            -input build/compile_commands.json \
+            -compiler gcc_13-64 \
+            -settings cpptestcli.properties \
+            ${PUBLISH_ARG} \
+            -exclude "**/googletest/**" \
+            -exclude "**/tests/**" \
+            -exclude "**/googlemock/**" \
+            -report reports
+          '''
+      }
+    }
     stage('Publish Findings (SA)') {
       steps {
         recordIssues(
