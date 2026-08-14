@@ -101,7 +101,6 @@ pipeline {
             echo "scontrol.rep1.git.workspace=${WORKSPACE}"
             echo "scontrol.git.exec=git"
             echo "logging.verbose=true"
-            echo "dtp.additional.settings=report.coverage.images=all;cpptest_ut"
             echo "report.dtp.publish=${REPORT_DTP_PUBLISH}"
           } > cpptestcli.properties
           
