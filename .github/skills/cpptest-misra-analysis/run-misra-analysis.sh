@@ -24,6 +24,7 @@ SCONTROL_GIT_URL="${SCONTROL_GIT_URL:-}"
 SCONTROL_GIT_EXEC="${SCONTROL_GIT_EXEC:-git}"
 NEW_VIOLATIONS_ONLY="${NEW_VIOLATIONS_ONLY:-0}"
 BASELINE_REPORT="${BASELINE_REPORT:-}"
+CPPTEST_PROPERTIES="${CPPTEST_PROPERTIES:-$HOME/cpptestcli.properties}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -317,6 +318,13 @@ run_analysis() {
     fi
 
     cpptest_cmd+=(-input "$COMPILE_DB" -report "$report_dir")
+
+    # Load license/settings from properties file if available (written by copilot-setup-steps)
+    if [ -f "$CPPTEST_PROPERTIES" ]; then
+        cpptest_cmd+=(-localsettings "$CPPTEST_PROPERTIES")
+        print_step "Using properties file: $CPPTEST_PROPERTIES"
+    fi
+
     "${cpptest_cmd[@]}" 2>&1 | tee misra_analysis.log
     
     # Store report dir for summary extraction
@@ -461,6 +469,9 @@ main() {
     echo "  Test Config: $TEST_CONFIG"
     echo "  Compile DB: $COMPILE_DB"
     echo "  Output: $OUTPUT_DIR"
+    if [ -f "$CPPTEST_PROPERTIES" ]; then
+        echo "  Properties: $CPPTEST_PROPERTIES"
+    fi
     if [ "$SCONTROL_MODE" = "branch" ]; then
         echo "  Mode: Branch scope (vs $SCONTROL_REF_BRANCH)"
     elif [ "$SCONTROL_MODE" = "local" ]; then

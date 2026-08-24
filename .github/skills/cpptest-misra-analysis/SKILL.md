@@ -25,6 +25,9 @@ This skill provides automated MISRA C++ 2023 static analysis using Parasoft C++t
 - `CPPTEST_HOME` should be set to the same value as `CPPTEST_STD`
 - C++ compiler installed (GCC, Clang, or compatible)
 - CMake 3.11+ (optional, for `compile_commands.json`)
+- **License credentials** (Copilot agent): provided automatically via `.github/copilot-setup-steps.yml`,
+  which writes `~/cpptestcli.properties` from the `LSS_URL`, `LSS_USER`, and `LSS_PASS` repository
+  secrets/variables before each agent session. Set `CPPTEST_PROPERTIES` to override the path.
 
 ## Step-by-step process
 
