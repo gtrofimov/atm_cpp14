@@ -1,12 +1,12 @@
 ---
 name: cpptest-coverage-analysis
-description: Analyze code coverage using C/C++test (cpptest-ct). Use this skill to run unit tests with coverage instrumentation, compute coverage metrics, and generate coverage reports for the ATM C++ project.
+description: Analyze code coverage in CMake-based C/C++ projects using C/C++test (cpptest-ct). Use this skill to run focused tests with coverage instrumentation, compute metrics, diagnose coverage failures, and generate reports.
 license: MIT
 ---
 
 # C/C++test Coverage Analysis Skill
 
-This skill enables you to perform comprehensive code coverage analysis using C/C++test (cpptest-ct) for the ATM C++14 project. It guides the agent through setting up coverage instrumentation, running tests, and generating coverage reports.
+This skill enables coverage analysis for CMake-based C/C++ projects using C/C++test (cpptest-ct). It guides the agent through project discovery, coverage instrumentation, focused test execution, data validation, and report generation.
 
 ## When to use this skill
 
@@ -20,44 +20,119 @@ Use this skill when you need to:
 
 ## Quick Start
 
-Run: `./.github/skills/cpptest-coverage-analysis/run-coverage.sh` or `OUTPUT_JSON=1` for JSON output.
+Run the project's coverage script when one exists. Otherwise use the generic
+workflow below. Set `OUTPUT_JSON=1` when the project script supports JSON.
 
 ## Prerequisites
 
 - `CPPTEST_HOME` environment variable set to C/C++test installation
 - If `CPPTEST_CT` is set, treat it as the source of truth for `CPPTEST_HOME`
 - Valid C/C++test license
-- CMake-based C++ project with GoogleTest integration
+- CMake-based C or C++ project
+- A project test executable or test runner
+
+## Project configuration
+
+Discover these values before running commands. Do not assume target names,
+source paths, test frameworks, or repository layout:
+
+```bash
+SOURCE_FILE="${SOURCE_FILE:-path/to/source.cxx}"
+BUILD_DIR="${BUILD_DIR:-build}"
+TEST_TARGET="${TEST_TARGET:-test-target}"
+TEST_COMMAND="${TEST_COMMAND:-${BUILD_DIR}/test-runner}"
+TEST_ARGS="${TEST_ARGS:-}"
+```
+
+Use the project's existing CMake test target and test runner. For CTest,
+prefer `ctest --test-dir "$BUILD_DIR"`. For GoogleTest, pass
+For GoogleTest, set `TEST_ARGS` to its native filter option. For other
+frameworks, set `TEST_ARGS` to their native focused-test option. If no focused option exists,
+run the narrowest available test target and state that limitation.
 
 ## Step-by-step process
 
-### 1. Clean rebuild with coverage
+### 1. Preflight and clean coverage state
+
+Run from repository root. Resolve `CPPTEST_HOME` from `CPPTEST_CT` first, then
+verify C/C++test tools and Java prerequisites before starting a build.
+
+Remove coverage state when maps, binaries, or logs may come from different
+builds. Preserve ordinary build artifacts unless a clean rebuild is needed:
 
 ```bash
-cd $(git rev-parse --show-toplevel)
-rm -rf build && mkdir build && cd build
-cmake -DCPPTEST_COVERAGE=ON .. && make clean all -j4
+rm -rf .coverage "$BUILD_DIR/cpptest-coverage" "$BUILD_DIR/cpptest-runtime"
+cmake -S . -B "$BUILD_DIR" -DCPPTEST_COVERAGE=ON
 ```
 
-### 2. Run instrumented tests
+Do not mix an old `.clog` with newly generated coverage maps.
+
+### 2. Build and verify instrumentation
 
 ```bash
-./atm_gtest
+cmake --build "$BUILD_DIR" --target "$TEST_TARGET" -j4 \
+  > /tmp/coverage-build.log 2>&1
+tail -60 /tmp/coverage-build.log
 ```
 
-GoogleTest sources live in `tests/gt`.
+Verify `compile_commands.json` contains `cpptestcc` and the coverage workspace
+contains maps for source files under test. If either check fails, stop and
+reconfigure instead of running coverage.
 
-### 3. Compute coverage metrics
+### 3. Run focused tests first
 
 ```bash
-make cpptestcov-compute
+${TEST_COMMAND} ${TEST_ARGS} \
+  > /tmp/coverage-tests.log 2>&1
+test_status=$?
+tail -40 /tmp/coverage-tests.log
+exit $test_status
 ```
 
-### 4. Generate report
+Use the test framework's native command and focused filter. Run the full suite
+separately; an unrelated failure must not hide coverage for passing focused
+tests.
+
+### 4. Compute coverage metrics
 
 ```bash
-make cpptestcov-report
+cmake --build "$BUILD_DIR" --target cpptestcov-compute > /tmp/coverage.log 2>&1
+coverage_status=$?
+tail -60 /tmp/coverage.log
+exit $coverage_status
 ```
+
+Run this stage only after focused tests pass. Never use
+`-ignore-clog-integrity-error`; a map/log mismatch makes results unreliable.
+
+### 5. Query and generate reports
+
+```bash
+cmake --build "$BUILD_DIR" --target cpptestcov-report > /tmp/coverage-report.log 2>&1
+report_status=$?
+tail -40 /tmp/coverage-report.log
+exit $report_status
+```
+
+Query requested files with C/C++test MCP tools after computation. Claim a
+coverage percentage only when the query uses fresh `.coverage` data and the
+compute step completed without integrity errors.
+
+### Focused file coverage
+
+For a requested source file, use this sequence:
+
+1. Build with `CPPTEST_COVERAGE=ON`.
+2. Run the narrowest test target or filter covering the requested file.
+3. Compute coverage.
+4. Query the requested source file with `query_type: notcovered`.
+5. Report 100% only when the not-covered result is empty.
+6. Run the full suite separately and report unrelated failures separately.
+
+If compute reports `cannot find FunctionIds` or another map/log integrity
+error, delete `.coverage`, `<build-dir>/cpptest-coverage`, and
+`<build-dir>/cpptest-runtime`, then repeat the clean workflow once. Stop after
+the retry and report the exact error if it fails again.
 
 ## Understanding Coverage Metrics
 
@@ -85,23 +160,54 @@ For general troubleshooting (license errors, missing data, build configuration),
 - Look for `cpptestcc` compiler wrapper in build output
 - If missing, verify `CPPTEST_HOME` is correct and in PATH
 
+**`make` reports `Error 2`?**
+- Treat it as a wrapper status from a failed recipe, not the root cause
+- Find the first C/C++test or compiler error in the captured log
+- Do not repeat parent `make` failures in the final report
+
+**`cannot find FunctionIds` or map/log mismatch?**
+- Treat coverage as invalid
+- Remove all coverage state and rebuild maps, runtime, and instrumented binary
+- Never suppress the integrity error to obtain a percentage
+
+**Full suite has unrelated failures?**
+- Record focused test status and full-suite status independently
+- Compute focused coverage when focused tests pass
+- Name failing tests separately; do not call focused coverage a full-suite result
+
 ## Example workflow
 
 ```bash
 export CPPTEST_HOME=${CPPTEST_CT:-/opt/parasoft/cpptest-ct}
 cd $(git rev-parse --show-toplevel)
-rm -rf build && mkdir build && cd build
-cmake -DCPPTEST_COVERAGE=ON .. && make -j4
-./atm_gtest
-make cpptestcov-compute cpptestcov-report
+BUILD_DIR="${BUILD_DIR:-build}"
+rm -rf .coverage "$BUILD_DIR/cpptest-coverage" "$BUILD_DIR/cpptest-runtime"
+TEST_TARGET="${TEST_TARGET:-test-target}"
+TEST_COMMAND="${TEST_COMMAND:-${BUILD_DIR}/test-runner}"
+TEST_ARGS="${TEST_ARGS:-}"
+cmake -S . -B "$BUILD_DIR" -DCPPTEST_COVERAGE=ON
+cmake --build "$BUILD_DIR" --target "$TEST_TARGET" -j4 \
+  > /tmp/coverage-build.log 2>&1
+${TEST_COMMAND} ${TEST_FILTER:+--gtest_filter="$TEST_FILTER"} \
+  > /tmp/coverage-tests.log 2>&1
+test_status=$?
+tail -40 /tmp/coverage-tests.log
+if [[ $test_status -ne 0 ]]; then exit $test_status; fi
+cmake --build "$BUILD_DIR" --target cpptestcov-compute \
+  > /tmp/coverage.log 2>&1
+coverage_status=$?
+tail -60 /tmp/coverage.log
+if [[ $coverage_status -ne 0 ]]; then exit $coverage_status; fi
+cmake --build "$BUILD_DIR" --target cpptestcov-report \
+  > /tmp/coverage-report.log 2>&1
+tail -40 /tmp/coverage-report.log
 ```
 
 ## Output locations
 
 - **Coverage database**: `.coverage/`
-- **Coverage maps**: `build/cpptest-coverage/`
-- **Report**: `build/coverage_report.txt`
-- **Summary**: `reports/summary/coverage_summary.md`
+- **Coverage maps**: `<build-dir>/cpptest-coverage/`
+- **Coverage database and reports**: `.coverage/`
 
 ## Coverage script options
 
@@ -110,9 +216,18 @@ Environment variables:
 - `CLEAN_COVERAGE=1` - Delete stale coverage data before rebuild
 - `AUTO_REBUILD_ON_MISMATCH=1` - Retry clean rebuild if compute fails
 - `WRITE_DELTA_SUMMARY=1` - Write LC/MCDC by-file summary
-- `REPORT_FILTER_PATHS=1` - Filter report to `src/` and `include/`
+- `REPORT_FILTER_PATHS=1` - Filter report to project source/include paths
 - `OUTPUT_JSON=1` - Write JSON summary
 - `SUMMARY_DIR=/path` - Customize summary output location
+
+## Output and token discipline
+
+- Capture build and report output in temporary log files.
+- Show only exit status, failed test names, and the final 40-60 log lines.
+- Do not enable verbose make output unless the normal build fails.
+- Query only requested source files through MCP.
+- Skip HTML, Markdown, suppression, and unrelated source reports unless asked.
+- Never infer success from an existing report; verify fresh compute output first.
 
 ## Viewing coverage in VS Code
 
@@ -205,16 +320,16 @@ Here's how to use MCP tools for comprehensive coverage analysis:
 ```
 1. Generate initial coverage report (as described above)
 
-2. Query uncovered lines in ATM.cxx:
+2. Query uncovered lines in the requested source file:
    mcp_cpptest-ct_query_line_coverage(
-     source_file: "/path/to/repo/src/ATM.cxx",
+  source_file: "/path/to/repo/src/source.cxx",
      query_type: "notcovered",
      coverage_data_dir: "/path/to/repo/.coverage"
    )
 
-3. Query covered lines in Account.cxx:
+3. Query covered lines in another requested source file:
    mcp_cpptest-ct_query_line_coverage(
-     source_file: "/path/to/repo/src/Account.cxx",
+  source_file: "/path/to/repo/src/other-source.cxx",
      query_type: "covered",
      coverage_data_dir: "/path/to/repo/.coverage"
    )
@@ -232,8 +347,8 @@ Here's how to use MCP tools for comprehensive coverage analysis:
 
 To use MCP tools when asking Copilot for coverage analysis:
 
-- "Query coverage for the ATM.cxx file using MCP"
-- "Find all untested lines in Account.cxx using the coverage query tool"
+- "Query coverage for source.cxx using MCP"
+- "Find all untested lines in source.cxx using the coverage query tool"
 - "Help me suppress coverage for deprecated code using MCP"
 - "Search cpptest documentation for MCDC coverage best practices"
 
@@ -243,5 +358,5 @@ Copilot will use the appropriate MCP tools to provide accurate, detailed respons
 
 - C/C++test coverage types: `cpptestcov -help` for detailed options
 - CMake integration: See `cpptest-coverage.cmake` in project root
-- Test suite: `tests/gt/`
+- Test suite: project-defined test directory or CTest configuration
 - MCP Server: C/C++test-ct MCP protocol server documentation
