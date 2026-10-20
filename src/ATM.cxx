@@ -6,8 +6,9 @@ using std::string;
 
 ATM::ATM(Bank* bank, BaseDisplay* display)
 {
-    myBank = bank;
-    myDisplay = display;
+    myCurrentAccount = 0;
+    myBank = (Bank*)bank;
+    myDisplay = (BaseDisplay*)display;
 }
   
 void ATM::viewAccount(int accountNumber, string password)
@@ -64,4 +65,3 @@ void ATM::withdraw(double amount)
     myDisplay->showInfoToUser("Updated Balance");
     myDisplay->showBalance(bal);
 }
-
