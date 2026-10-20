@@ -1,5 +1,23 @@
 # Copilot Instructions for atm_cpp14
 
+## MISRA Analysis Agent
+
+A dedicated MISRA C++ 2023 analysis agent is defined in
+`.github/agents/cpptest-misra-analysis.md`. Use it (in agent mode) when the
+user asks to run MISRA analysis, check compliance, or review new violations on
+a branch.
+
+The agent autonomously decides the analysis scope and violation filter from the
+user's plain-language request:
+
+- **Scope**: full scan (default) | `--branch` (modified files) | `--local` (working tree)
+- **Filter**: all violations (default) | `--new-violations` (exclude baseline)
+
+The interactive skill (`.github/skills/cpptest-misra-analysis/`) and the agent
+coexist and share the same helper script and MCP tools.
+
+---
+
 ## MCP Server Warm-up
 
 At the start of each session, call `cpptest-ct-search_documentation` with query `"coverage metrics"` and `cpptest-sa-search_documentation` with query `"MISRA C++ 2023"` to ensure both MCP servers are connected before any analysis work begins.

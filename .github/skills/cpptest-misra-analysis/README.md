@@ -84,6 +84,7 @@ This file contains severity counts and the top violated rules.
 - `OUTPUT_DIR`: Output directory for reports (default: `reports`)
 - `INCLUDE_DIRS`: Space-separated include directories (default: `include`)
 - `SOURCE_FILES`: Source files to analyze (default: `src/*.cxx`)
+- `CPPTEST_PROPERTIES`: Path to a `cpptestcli.properties` file with license settings (default: `~/cpptestcli.properties`). Auto-written by `.github/copilot-setup-steps.yml` from `LSS_URL`, `LSS_USER`, and `LSS_PASS` secrets — no action needed when running as a Copilot agent.
 
 ## Integration Examples
 
